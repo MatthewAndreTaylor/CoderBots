@@ -68,3 +68,5 @@ def load_map(world, filepath, ppm=10):
         else:
             # Unknown shape type; skip
             continue
+    # Return the parsed map data so callers can keep/use metadata (ppm, shapes, name, etc.)
+    return data

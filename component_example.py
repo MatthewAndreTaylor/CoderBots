@@ -8,71 +8,226 @@ class RobotPanel(anywidget.AnyWidget):
 
         const endpoint = model.get("endpoint");
 
-        // Load Two.js if not already loaded
         await new Promise((resolve) => {
-            if (window.Two) {
-                resolve();
-                return;
-            }
+            if (window.Two) { resolve(); return; }
             const script = document.createElement('script');
             script.src = "https://cdnjs.cloudflare.com/ajax/libs/two.js/0.8.12/two.min.js";
             script.onload = resolve;
             document.head.appendChild(script);
         });
 
-        // Create title
-        const title = document.createElement('h3');
-        title.textContent = model.get("title");
-        el.appendChild(title);
-
-        // Message element (for server message)
-        const messageEl = document.createElement('p');
-        messageEl.style.fontWeight = '600';
-        messageEl.style.color = '#222';
-        el.appendChild(messageEl);
-
-        // Canvas container with border and shadow
-        const canvasContainer = document.createElement("div");
-        canvasContainer.style.border = "2px solid #444";
-        canvasContainer.style.borderRadius = "8px";
-        canvasContainer.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
-        canvasContainer.style.display = "flex";
-        canvasContainer.style.alignItems = "center";
-        canvasContainer.style.justifyContent = "center";
-        el.appendChild(canvasContainer);
-
-        const two = new window.Two({ width: 800, height: 600 }).appendTo(canvasContainer);
-        const rect = two.makeRectangle(250, 250, 25, 25);
-        rect.fill = '#FF0000';
-        rect.stroke = '#000';
-        rect.linewidth = 4;
-        two.update();
-
-        try {
-            const resp = await fetch(`${endpoint}/hello`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-            });
-
-            if (!resp.ok) {
-                throw new Error(`Server returned ${resp.status}`);
-            }
-
-            const data = await resp.json();
-            messageEl.textContent = data.message || "No message received.";
-        } catch (err) {
-            console.error("Fetch failed:", err);
-            messageEl.textContent = `Failed to fetch data from server. "${err.message}"`;
-            messageEl.style.color = "red";
-        }
-
-        // Style container layout
         el.style.display = "flex";
         el.style.flexDirection = "column";
         el.style.alignItems = "center";
         el.style.gap = "1em";
+
+        const title = document.createElement('h3');
+        title.textContent = model.get("title");
+        el.appendChild(title);
+
+        const messageEl = document.createElement('p');
+        messageEl.textContent = "Loading map...";
+        el.appendChild(messageEl);
+
+        const canvasContainer = document.createElement("div");
+        canvasContainer.style.border = "2px solid #444";
+        canvasContainer.style.borderRadius = "8px";
+        canvasContainer.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
+        el.appendChild(canvasContainer);
+
+        const SVG_W = 800;
+        const SVG_H = 600;
+        canvasContainer.style.width = SVG_W + 'px';
+        canvasContainer.style.height = SVG_H + 'px';
+
+        // Data display
+        const dataPre = document.createElement('pre');
+        dataPre.style.maxHeight = '180px';
+        dataPre.style.overflow = 'auto';
+        dataPre.style.background = '#fff';
+        dataPre.style.width = SVG_W + 'px';
+        dataPre.style.padding = '6px';
+        dataPre.style.border = '1px solid #ccc';
+        dataPre.style.borderRadius = '6px';
+        el.appendChild(dataPre);
+
+        const controls = document.createElement('div');
+        controls.style.display = 'flex';
+        controls.style.gap = '0.5em';
+        el.appendChild(controls);
+
+        function makeButton(text, onClick) {
+            const b = document.createElement('button');
+            b.textContent = text;
+            b.style.padding = '6px 10px';
+            b.onclick = onClick;
+            return b;
+        }
+
+        const up = makeButton("↑", () => sendMove(0, -1));
+        const down = makeButton("↓", () => sendMove(0, 1));
+        const left = makeButton("←", () => sendMove(-1, 0));
+        const right = makeButton("→", () => sendMove(1, 0));
+    const sensorBtn = makeButton("Sensor", sendSensor);
+    const stepBtn = makeButton("Step", sendStep);
+
+    controls.append(left, up, down, right, sensorBtn, stepBtn);
+
+        let PPM = 10;
+        let two = null;
+        let playerCircle = null;
+
+        async function fetchEnv() {
+            try {
+                const res = await fetch(`http://${endpoint}/robot_scenario_env`);
+                const data = await res.json();
+                drawMap(data.map);
+                drawPlayer(data.player);
+                messageEl.textContent = "Map loaded.";
+            } catch (err) {
+                messageEl.textContent = "Failed to load environment.";
+                console.error(err);
+            }
+        }
+
+        function ensureTwo() {
+            if (two) return two;
+            two = new Two({ width: SVG_W, height: SVG_H }).appendTo(canvasContainer);
+            // light background rectangle so canvas looks similar to previous SVG
+            const bg = two.makeRectangle(SVG_W/2, SVG_H/2, SVG_W, SVG_H);
+            bg.fill = '#fafafa';
+            bg.noStroke();
+            two.update();
+            return two;
+        }
+
+        function drawMap(map) {
+            if (!map) return;
+            // Shapes in the map JSON are in pixels. ppm is pixels-per-meter and is
+            // used to convert physics (meters) -> pixels for the player only.
+            PPM = map.ppm;
+
+            const t = ensureTwo();
+            // clear scene and add background
+            t.clear();
+            const bg = t.makeRectangle(SVG_W/2, SVG_H/2, SVG_W, SVG_H);
+            bg.fill = '#fafafa';
+            bg.noStroke();
+
+            map.shapes.forEach(shape => {
+                if (shape.type === 'rectangle') {
+                    // map rectangle x,y are center coords in pixels
+                    const rx = shape.x;
+                    const ry = shape.y;
+                    const rw = shape.width;
+                    const rh = shape.height;
+                    const rect = t.makeRectangle(rx, ry, rw, rh);
+                    rect.fill = '#ccc';
+                    rect.stroke = '#333';
+                    rect.linewidth = 1;
+                } else if (shape.type === 'triangle' || shape.type === 'polygon') {
+                    const anchors = shape.vertices.map(v => new Two.Anchor(v[0], v[1]));
+                    const tri = t.makePath(anchors, true);
+                    tri.fill = '#ddd';
+                    tri.stroke = '#333';
+                    tri.linewidth = 1;
+                }
+            });
+
+            t.update();
+        }
+
+        function drawPlayer(player) {
+            if (!player) return;
+            const pos = player.position;
+            let px = 0, py = 0;
+            if (Array.isArray(pos)) {
+                px = pos[0] * PPM;
+                py = pos[1] * PPM;
+            } else if (pos && typeof pos.x === 'number') {
+                px = pos.x * PPM;
+                py = pos.y * PPM;
+            } else if (player.position && player.position.x !== undefined) {
+                px = player.position.x * PPM;
+                py = player.position.y * PPM;
+            } else {
+                // unknown format; bail
+                return;
+            }
+
+            const t = ensureTwo();
+            if (!playerCircle) {
+                playerCircle = t.makeCircle(px, py, 10); // player_radius_px
+                playerCircle.fill = '#e44';
+                playerCircle.noStroke();
+            } else {
+                playerCircle.translation.set(px, py);
+            }
+            t.update();
+        }
+
+        async function sendMove(x, y, rotation = 0) {
+            try {
+                await fetch(`http://${endpoint}/robot_scenario_move`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ x, y, rotation })
+                });
+                messageEl.textContent = `Moved (${x}, ${y})`;
+            } catch (err) {
+                messageEl.textContent = "Move failed.";
+                console.error(err);
+            }
+        }
+
+        async function sendSensor() {
+            try {
+                const res = await fetch(`http://${endpoint}/robot_scenario_sensor`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: "{}"
+                });
+                const data = await res.json();
+                messageEl.textContent = `Sensor: ${JSON.stringify(data)}`;
+            } catch (err) {
+                messageEl.textContent = "Sensor failed.";
+                console.error(err);
+            }
+        }
+
+        async function stepLoop() {
+            try {
+                const res = await fetch(`http://${endpoint}/robot_scenario_step`);
+                const data = await res.json();
+                // server may return { player: {...} } or player directly
+                const player = data.player || data;
+                drawPlayer(player);
+                dataPre.textContent = JSON.stringify(player, null, 2);
+            } catch (err) {
+                console.warn("Step failed", err);
+            }
+            requestAnimationFrame(stepLoop);
+        }
+
+        async function sendStep() {
+            try {
+                const res = await fetch(`http://${endpoint}/robot_scenario_step`, { method: "GET" });
+                const data = await res.json();
+                const player = data.player || data;
+                drawPlayer(player);
+                dataPre.textContent = JSON.stringify(player, null, 2);
+                messageEl.textContent = "Stepped.";
+            } catch (err) {
+                messageEl.textContent = "Step failed.";
+                console.error(err);
+            }
+        }
+
+        // Start
+        await fetchEnv();
+        //stepLoop();
     }
     """
 
-    endpoint = traitlets.Unicode("http://localhost:5000").tag(sync=True)
+    endpoint = traitlets.Unicode("localhost:5000").tag(sync=True)
     title = traitlets.Unicode("Robot Control Panel").tag(sync=True)

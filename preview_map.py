@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import sys
+import math
 
 try:
     import pygame
@@ -206,7 +207,6 @@ def main(argv=None):
         if player:
             # normalize direction
             if vx != 0 or vy != 0:
-                import math
                 mag = math.hypot(vx, vy)
                 vx = vx / mag
                 vy = vy / mag
