@@ -73,9 +73,10 @@ class RobotPanel(anywidget.AnyWidget):
 
     controls.append(left, up, down, right, sensorBtn, stepBtn);
 
-        let PPM = 10;
-        let two = null;
-        let playerCircle = null;
+    let PPM = 10;
+    let two = null;
+    let playerCircle = null;
+    let sensorDots = [];
 
         async function fetchEnv() {
             try {
@@ -166,6 +167,36 @@ class RobotPanel(anywidget.AnyWidget):
             t.update();
         }
 
+        function drawSensorHits(points) {
+            // points: array of [x,y] in meters or objects {x,y}. Convert by PPM.
+            if (!two) ensureTwo();
+            // remove previous dots
+            try {
+                sensorDots.forEach(d => two.remove(d));
+            } catch (e) {
+                // ignore if removal fails
+            }
+            sensorDots = [];
+            if (!Array.isArray(points)) return;
+            points.forEach(pt => {
+                let x = 0, y = 0;
+                if (Array.isArray(pt)) {
+                    x = pt[0]; y = pt[1];
+                } else if (pt && typeof pt.x === 'number') {
+                    x = pt.x; y = pt.y;
+                } else {
+                    return;
+                }
+                const cx = x * PPM;
+                const cy = y * PPM;
+                const dot = two.makeCircle(cx, cy, 3);
+                dot.fill = '#08f';
+                dot.noStroke();
+                sensorDots.push(dot);
+            });
+            two.update();
+        }
+
         async function sendMove(x, y, rotation = 0) {
             try {
                 await fetch(`http://${endpoint}/robot_scenario_move`, {
@@ -188,7 +219,11 @@ class RobotPanel(anywidget.AnyWidget):
                     body: "{}"
                 });
                 const data = await res.json();
-                messageEl.textContent = `Sensor: ${JSON.stringify(data)}`;
+                // server returns { "hit_points": [[x,y], ...] }
+                const hits = data.hit_points || data.hitPoints || [];
+                drawSensorHits(hits);
+                // show full sensor payload in the data box
+                dataPre.textContent = JSON.stringify(data, null, 2);
             } catch (err) {
                 messageEl.textContent = "Sensor failed.";
                 console.error(err);
