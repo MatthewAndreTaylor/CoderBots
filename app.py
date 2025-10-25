@@ -4,8 +4,9 @@ from coderbot_package.maps.loader import load_map
 from flask_cors import CORS
 from lidar_module import lidar_scan
 import math
+
 # Server should send player physics data
-# when the server starts send a list 
+# when the server starts send a list
 
 app = Flask(__name__)
 CORS(app)
@@ -23,33 +24,31 @@ map_data = load_map(world, "coderbot_package/maps/rect_triangle_map.json", ppm=1
 # create player after map is loaded
 player_radius_px = 10
 player_body = world.CreateDynamicBody(
-    position=(WIDTH / 2 / ppm, HEIGHT / 2 / ppm),
-    linearDamping=0.5,
-    angularDamping=0.5
+    position=(WIDTH / 2 / ppm, HEIGHT / 2 / ppm), linearDamping=0.5, angularDamping=0.5
 )
 player_body.CreateFixture(
-    shape=b2CircleShape(radius=player_radius_px / ppm),
-    density=1.0,
-    friction=0.3
+    shape=b2CircleShape(radius=player_radius_px / ppm), density=1.0, friction=0.3
 )
 
 velocity = (0, 0)
 move_speed_px = 240
 
-@app.route('/', methods=['GET',"POST"])
+
+@app.route("/", methods=["GET", "POST"])
 def home():
     return render_template("index.html")
 
-@app.route('/robot_scenario_env')
+
+@app.route("/robot_scenario_env")
 def render_robot_scenario():
     player_data = {
         "position": [float(player_body.position.x), float(player_body.position.y)],
-        "angle": player_body.angle
+        "angle": player_body.angle,
     }
     return jsonify({"map": map_data, "player": player_data})
 
 
-@app.route('/robot_scenario_step')
+@app.route("/robot_scenario_step")
 def robot_scenario_step():
 
     dt = 1 / 60
@@ -58,12 +57,12 @@ def robot_scenario_step():
     # Get the player position and angle
     player_data = {
         "position": [float(player_body.position.x), float(player_body.position.y)],
-        "angle": player_body.angle
+        "angle": player_body.angle,
     }
     return jsonify({"player": player_data})
 
 
-@app.route('/robot_scenario_sensor', methods=['POST'])
+@app.route("/robot_scenario_sensor", methods=["POST"])
 def robot_scenario_sensor():
 
     request_data = request.json
@@ -74,9 +73,15 @@ def robot_scenario_sensor():
 
     origin = player_body.position
 
-    ranges, points, normals, angles = lidar_scan(
-        world, origin, player_body.angle, robot_body=player_body,
-        num_beams=num_beams, fov=fov, noise_std=noise_std, max_range=max_range
+    ranges, tags, normals, angles = lidar_scan(
+        world,
+        origin,
+        player_body.angle,
+        robot_body=player_body,
+        num_beams=num_beams,
+        fov=fov,
+        noise_std=noise_std,
+        max_range=max_range,
     )
 
     hit_points = []
@@ -87,14 +92,12 @@ def robot_scenario_sensor():
         y_end = origin[1] + dist * math.sin(a)
         hit_points.append((x_end, y_end))
 
-    lidar_data = {
-        "hit_points": hit_points
-    }
+    lidar_data = {"hit_points": hit_points, "tags": tags}
 
     return jsonify(lidar_data)
 
 
-@app.route('/robot_scenario_move', methods=['POST'])
+@app.route("/robot_scenario_move", methods=["POST"])
 def robot_scenario_move():
     # Get the movement data from the request
     desired_movement = request.json
@@ -115,6 +118,7 @@ def robot_scenario_move():
         player_body.linearVelocity = (0, 0)
 
     return jsonify()
+
 
 if __name__ == "__main__":
     app.run(debug=True)

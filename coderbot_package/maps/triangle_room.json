@@ -9,6 +9,8 @@
 
     { "type": "triangle", "vertices": [[300,300],[350,450],[250,450]] },
     { "type": "triangle", "vertices": [[500,300],[550,450],[450,450]] },
-    { "type": "triangle", "vertices": [[400,150],[450,250],[350,250]] }
+    { "type": "triangle", "vertices": [[400,150],[450,250],[350,250]] },
+
+    { "type": "goal", "x": 400, "y": 300, "width": 50, "height": 50 }
   ]
 }

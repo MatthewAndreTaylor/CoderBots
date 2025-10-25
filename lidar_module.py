@@ -2,6 +2,7 @@ import math
 import numpy as np
 from Box2D import b2Vec2, b2RayCastCallback
 
+
 class LidarCallback(b2RayCastCallback):
     def __init__(self, body_to_ignore=None):
         super().__init__()
@@ -23,17 +24,26 @@ class LidarCallback(b2RayCastCallback):
             self.point = b2Vec2(point)
             self.normal = b2Vec2(normal)
             self.fraction = fraction
+            self.body = fixture.body
 
         # Return the fraction to clip at this intersection (optimization)
         return fraction
 
-def lidar_scan(world, origin, yaw, robot_body=None,
-               num_beams=360, fov=2*math.pi,
-               max_range=1000.0, noise_std=0.0):
+
+def lidar_scan(
+    world,
+    origin,
+    yaw,
+    robot_body=None,
+    num_beams=360,
+    fov=2 * math.pi,
+    max_range=1000.0,
+    noise_std=0.0,
+):
     origin = b2Vec2(origin)
-    angles = np.linspace(-fov/2, fov/2, num_beams) + yaw
+    angles = np.linspace(-fov / 2, fov / 2, num_beams) + yaw
     ranges = np.full(num_beams, max_range)
-    points = [None] * num_beams
+    tags = [None] * num_beams
     normals = [None] * num_beams
 
     for i, ang in enumerate(angles):
@@ -50,7 +60,8 @@ def lidar_scan(world, origin, yaw, robot_body=None,
                 dist += np.random.normal(0, noise_std)
                 dist = np.clip(dist, 0, max_range)
             ranges[i] = dist
-            points[i] = b2Vec2(origin.x + dx * dist, origin.y + dy * dist)
+
+            tags[i] = cb.body.userData
             normals[i] = cb.normal
 
-    return ranges, points, normals, angles
+    return ranges, tags, normals, angles

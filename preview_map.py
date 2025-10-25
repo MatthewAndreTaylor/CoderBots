@@ -10,6 +10,7 @@ Usage:
   python preview_map.py                # opens first map found
   python preview_map.py path/to/map.json
 """
+
 import argparse
 import json
 import os
@@ -25,7 +26,9 @@ except Exception:
 try:
     from Box2D import b2World, b2CircleShape
 except Exception:
-    print("pybox2d (Box2D) is required for physics. Install via pip: pip install box2d-py")
+    print(
+        "pybox2d (Box2D) is required for physics. Install via pip: pip install box2d-py"
+    )
     raise
 
 from coderbot_package.maps.loader import load_map as loader_create_static_bodies
@@ -37,16 +40,20 @@ MAPS_DIR = os.path.join(os.path.dirname(__file__), "coderbot_package", "maps")
 def find_map_files():
     if not os.path.isdir(MAPS_DIR):
         return []
-    return [os.path.join(MAPS_DIR, f) for f in os.listdir(MAPS_DIR) if f.lower().endswith('.json')]
+    return [
+        os.path.join(MAPS_DIR, f)
+        for f in os.listdir(MAPS_DIR)
+        if f.lower().endswith(".json")
+    ]
 
 
 def load_map(path):
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    ppm = data.get('ppm', 10)
-    shapes = data.get('shapes', [])
-    name = data.get('name', os.path.basename(path))
-    return {'path': path, 'name': name, 'ppm': ppm, 'shapes': shapes}
+    ppm = data.get("ppm", 10)
+    shapes = data.get("shapes", [])
+    name = data.get("name", os.path.basename(path))
+    return {"path": path, "name": name, "ppm": ppm, "shapes": shapes}
 
 
 def build_physics_for_map(map_path, ppm):
@@ -61,7 +68,9 @@ def create_player(world, start_px, radius_px, ppm):
     # create a dynamic circle body centered at start_px (pixels). Convert to meters.
     start_m = (start_px[0] / ppm, start_px[1] / ppm)
     radius_m = radius_px / ppm
-    body = world.CreateDynamicBody(position=start_m, linearDamping=1.0, angularDamping=1.0)
+    body = world.CreateDynamicBody(
+        position=start_m, linearDamping=1.0, angularDamping=1.0
+    )
     circle = b2CircleShape(radius=radius_m)
     body.CreateFixture(shape=circle, density=1.0, friction=0.3, restitution=0.1)
     return body
@@ -80,14 +89,14 @@ def draw_map(screen, mapdata, ppm):
         pygame.draw.line(screen, grid_color, (0, y), (w, y))
 
     # draw shapes
-    for s in mapdata['shapes']:
-        stype = s.get('type')
-        if stype == 'rectangle':
-            x = s.get('x', 0)
-            y = s.get('y', 0)
-            width = s.get('width', 10)
-            height = s.get('height', 10)
-            angle = s.get('angle', 0)
+    for s in mapdata["shapes"]:
+        stype = s.get("type")
+        if stype == "rectangle":
+            x = s.get("x", 0)
+            y = s.get("y", 0)
+            width = s.get("width", 10)
+            height = s.get("height", 10)
+            angle = s.get("angle", 0)
 
             rect = pygame.Rect(0, 0, width, height)
             rect.center = (int(x), int(y))
@@ -101,8 +110,8 @@ def draw_map(screen, mapdata, ppm):
             br.center = rect.center
             screen.blit(surf, br.topleft)
 
-        elif stype in ('triangle', 'polygon'):
-            verts = s.get('vertices', [])
+        elif stype in ("triangle", "polygon"):
+            verts = s.get("vertices", [])
             if len(verts) == 0:
                 continue
             # accept flat list too
@@ -115,8 +124,8 @@ def draw_map(screen, mapdata, ppm):
 
         else:
             # unknown shape; draw a small marker
-            x = s.get('x', None)
-            y = s.get('y', None)
+            x = s.get("x", None)
+            y = s.get("y", None)
             if x is not None and y is not None:
                 pygame.draw.circle(screen, (220, 120, 120), (int(x), int(y)), 4)
 
@@ -126,7 +135,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('map', nargs='?', help='path to map json (optional)')
+    parser.add_argument("map", nargs="?", help="path to map json (optional)")
     args = parser.parse_args(argv)
 
     files = find_map_files()
@@ -138,19 +147,19 @@ def main(argv=None):
             return 1
 
     if not files:
-        print('No map JSON files found in', MAPS_DIR)
+        print("No map JSON files found in", MAPS_DIR)
         return 1
 
     idx = 0
     current_map = load_map(files[idx])
-    ppm = current_map.get('ppm', 10)
+    ppm = current_map.get("ppm", 10)
 
     # Build physics world for the first map
-    world = build_physics_for_map(current_map['path'], ppm)
+    world = build_physics_for_map(current_map["path"], ppm)
 
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption('Map Preview (physics)')
+    pygame.display.set_caption("Map Preview (physics)")
     clock = pygame.time.Clock()
 
     # create player at center of screen
@@ -172,24 +181,30 @@ def main(argv=None):
                 elif ev.key == pygame.K_RIGHT:
                     idx = (idx + 1) % len(files)
                     current_map = load_map(files[idx])
-                    ppm = current_map.get('ppm', ppm)
+                    ppm = current_map.get("ppm", ppm)
                     # rebuild physics world and reset player
-                    world = build_physics_for_map(current_map['path'], ppm)
-                    player = create_player(world, (screen_w // 2, screen_h // 2), player_radius_px, ppm)
+                    world = build_physics_for_map(current_map["path"], ppm)
+                    player = create_player(
+                        world, (screen_w // 2, screen_h // 2), player_radius_px, ppm
+                    )
                 elif ev.key == pygame.K_LEFT:
                     idx = (idx - 1) % len(files)
                     current_map = load_map(files[idx])
-                    ppm = current_map.get('ppm', ppm)
-                    world = build_physics_for_map(current_map['path'], ppm)
-                    player = create_player(world, (screen_w // 2, screen_h // 2), player_radius_px, ppm)
+                    ppm = current_map.get("ppm", ppm)
+                    world = build_physics_for_map(current_map["path"], ppm)
+                    player = create_player(
+                        world, (screen_w // 2, screen_h // 2), player_radius_px, ppm
+                    )
                 elif ev.key == pygame.K_r:
                     current_map = load_map(files[idx])
-                    ppm = current_map.get('ppm', ppm)
-                    world = build_physics_for_map(current_map['path'], ppm)
-                    player = create_player(world, (screen_w // 2, screen_h // 2), player_radius_px, ppm)
-                elif ev.unicode == '+' or ev.key == pygame.K_EQUALS:
+                    ppm = current_map.get("ppm", ppm)
+                    world = build_physics_for_map(current_map["path"], ppm)
+                    player = create_player(
+                        world, (screen_w // 2, screen_h // 2), player_radius_px, ppm
+                    )
+                elif ev.unicode == "+" or ev.key == pygame.K_EQUALS:
                     ppm = max(1, ppm + 1)
-                elif ev.unicode == '-' or ev.key == pygame.K_MINUS:
+                elif ev.unicode == "-" or ev.key == pygame.K_MINUS:
                     ppm = max(1, ppm - 1)
 
         # movement input -> set player linearVelocity each frame
@@ -231,11 +246,17 @@ def main(argv=None):
             px = int(pos[0] * ppm)
             py = int(pos[1] * ppm)
             pygame.draw.circle(screen, (80, 160, 220), (px, py), player_radius_px)
-            pygame.draw.circle(screen, (20, 40, 60), (px, py), player_radius_px, width=2)
+            pygame.draw.circle(
+                screen, (20, 40, 60), (px, py), player_radius_px, width=2
+            )
 
         # HUD
         font = pygame.font.SysFont(None, 20)
-        text = font.render(f"{os.path.basename(current_map['path'])}  ppm={ppm}  [{idx+1}/{len(files)}]  Left/Right: cycle  +/-: zoom  R:reload  Q/Esc:quit", True, (220, 220, 220))
+        text = font.render(
+            f"{os.path.basename(current_map['path'])}  ppm={ppm}  [{idx+1}/{len(files)}]  Left/Right: cycle  +/-: zoom  R:reload  Q/Esc:quit",
+            True,
+            (220, 220, 220),
+        )
         screen.blit(text, (8, 8))
 
         pygame.display.flip()
@@ -245,5 +266,5 @@ def main(argv=None):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())
