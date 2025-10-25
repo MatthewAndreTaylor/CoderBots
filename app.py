@@ -67,10 +67,12 @@ def robot_scenario_step():
 def robot_scenario_sensor():
 
     request_data = request.json
-    num_beams = request_data.get("num_beams", 60)
-    fov = request_data.get("fov", 2 * math.pi)
-    max_range = request_data.get("max_range", 1000.0)
-    noise_std = request_data.get("noise_std", 0.0)
+    num_beams = int(request_data.get("num_beams", 60))
+    fov = float(request_data.get("fov", 2 * math.pi))
+    max_range = float(request_data.get("max_range", 1000.0))
+    noise_std = float(request_data.get("noise_std", 0.0))
+
+    print(max_range)
 
     origin = player_body.position
 
