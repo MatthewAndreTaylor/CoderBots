@@ -72,8 +72,6 @@ def robot_scenario_sensor():
     max_range = float(request_data.get("max_range", 1000.0))
     noise_std = float(request_data.get("noise_std", 0.0))
 
-    print(max_range)
-
     origin = player_body.position
 
     ranges, points, normals, angles = lidar_scan(
