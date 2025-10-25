@@ -51,16 +51,14 @@
     <circle cx="-14" cy="12" r="2.5" fill="#ffd24d" stroke="#b37f09" stroke-width="0.6"/>
     <circle cx="-18" cy="8" r="2.5" fill="#ffd24d" stroke="#b37f09" stroke-width="0.6"/>
     <circle cx="-10" cy="8" r="2.5" fill="#ffd24d" stroke="#b37f09" stroke-width="0.6"/>
-  </g>
-
-  <!-- barrel pointing up (negative y) -->
-  <g transform="translate(100,58)">
-    <!-- barrel base -->
-    <rect class="barrel" x="-5" y="-34" width="10" height="34" rx="2" ry="2"/>
-    <!-- muzzle -->
-    <rect class="barrel" x="-6.5" y="-44" width="13" height="10" rx="2" ry="2"/>
-    <!-- barrel shadow / detail -->
-    <line x1="-3" y1="-10" x2="3" y2="-10" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+    <g transform="translate(10,-10)">
+      <!-- barrel base -->
+      <rect class="barrel" x="-5" y="-34" width="10" height="34" rx="2" ry="2"/>
+      <!-- muzzle -->
+      <rect class="barrel" x="-6.5" y="-44" width="13" height="10" rx="2" ry="2"/>
+      <!-- barrel shadow / detail -->
+      <line x1="-3" y1="-10" x2="3" y2="-10" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+    </g>
   </g>
 
   <!-- subtle extras: antenna and repair bay marker -->
