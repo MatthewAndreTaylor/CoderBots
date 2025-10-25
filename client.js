@@ -3,6 +3,8 @@ export async function render({ model, el }) {
 
   const endpoint = model.get("endpoint");
 
+  const controlsActive = model.get("controls");
+
   await new Promise((resolve) => {
     if (window.Two) {
       resolve();
@@ -48,6 +50,9 @@ export async function render({ model, el }) {
   dataPre.style.padding = "6px";
   dataPre.style.border = "1px solid #ccc";
   dataPre.style.borderRadius = "6px";
+  if (!controlsActive) {
+    dataPre.style.display = "none";
+  }
   el.appendChild(dataPre);
 
   const controls = document.createElement("div");
@@ -126,12 +131,16 @@ export async function render({ model, el }) {
   ]);
   const stepBtn = makeButton("Step", sendStep);
 
-  controls.append(left, up, down, right, sensorBtn, stepBtn);
+  if (controlsActive) {
+    controls.append(left, up, down, right, sensorBtn, stepBtn);
+  }
 
   let PPM = 10;
   let two = null;
   let playerCircle = null;
   let sensorDots = [];
+  // guard so we only bind the Two.js update handler once
+  let twoUpdateBound = false;
 
   async function fetchEnv() {
     try {
@@ -153,6 +162,14 @@ export async function render({ model, el }) {
     const bg = two.makeRectangle(SVG_W / 2, SVG_H / 2, SVG_W, SVG_H);
     bg.fill = "#fafafa";
     bg.noStroke();
+    // Start the animation loop so any bound update handlers run
+    if (typeof two.play === 'function') {
+      try {
+        two.play();
+      } catch (e) {
+        // ignore if play is unavailable for some reason
+      }
+    }
     two.update();
     return two;
   }
@@ -248,13 +265,38 @@ export async function render({ model, el }) {
       }
       const cx = x * PPM;
       const cy = y * PPM;
-      const dot = two.makeCircle(cx, cy, 2);
-      dot.fill = "#08f";
-      dot.noStroke();
-      sensorDots.push(dot);
+      createDot(cx, cy);
     });
+
+    // Bind the update handler only once so we don't accumulate handlers on
+    // repeated sensor calls. This will progressively fade the dots.
+    if (!twoUpdateBound) {
+      two.bind('update', function(frameCount, timeDelta) {
+        // timeDelta may be provided in ms depending on Two.js; convert to seconds
+        const dt = (typeof timeDelta === 'number') ? timeDelta / 1000 : 0.016;
+        for (const dot of sensorDots) {
+          if (dot.opacity > 0) {
+            dot.elapsed += dt;
+            dot.opacity = Math.max(1 - dot.elapsed / dot.fadeDuration, 0);
+          }
+        }
+      });
+      twoUpdateBound = true;
+    }
+
+    // Ensure the scene renders immediately with the new dots
     two.update();
   }
+
+  function createDot(cx, cy) {
+    const dot = two.makeCircle(cx, cy, 3);
+    dot.fill = "#ff00ffff";
+    dot.noStroke();
+    dot.opacity = 1;
+    dot.fadeDuration = 0.5; // seconds
+    dot.elapsed = 0;
+    sensorDots.push(dot);
+}
 
   async function sendMove(x, y, rotation = 0) {
     try {
