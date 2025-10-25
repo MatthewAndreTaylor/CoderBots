@@ -1,4 +1,6 @@
 swig==4.2.0
 box2d-py==2.3.8
-flask-sock==0.6.0
+flask-cors
+Flask
+Werkzeug
 anywidget

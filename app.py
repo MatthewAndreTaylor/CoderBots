@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request
 from Box2D import b2World, b2CircleShape
 from coderbot_package.maps.loader import load_map
 from flask_cors import CORS
+from lidar_module import lidar_scan
 import math
 # Server should send player physics data
 # when the server starts send a list 
@@ -65,16 +66,35 @@ def robot_scenario_step():
 @app.route('/robot_scenario_sensor', methods=['POST'])
 def robot_scenario_sensor():
 
-    # sensor parameters
-    sensor_data = {
-        "type": "proximity",
-        "range": 10
+    num_beams = 360
+    fov = 2 * math.pi
+    max_range = 10.0
+    noise_std = 0.0
+
+    origin = player_body.position
+
+    ranges, points, normals, angles = lidar_scan(
+        world, origin, player_body.angle, robot_body=player_body,
+        num_beams=num_beams, fov=fov, noise_std=noise_std
+    )
+
+    hit_points = []
+
+    for i, dist in enumerate(ranges):
+        a = angles[i]
+        x_end = origin[0] + dist * math.cos(a)
+        y_end = origin[1] + dist * math.sin(a)
+        hit_points.append((x_end, y_end))
+
+    lidar_data = {
+        "ranges": ranges,
+        "points": points,
+        "normals": normals,
+        "angles": angles,
+        "hit_points": hit_points
     }
 
-    # Process the sensor data
-    #... raycast
-    sensor_data["value"] = 5  # Example value
-    return jsonify(sensor_data)
+    return jsonify(lidar_data)
 
 
 @app.route('/robot_scenario_move', methods=['POST'])
