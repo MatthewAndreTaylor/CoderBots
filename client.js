@@ -120,7 +120,7 @@ export async function render({ model, el }) {
   const right = makeButton("→", () => sendMove(1, 0));
   const sensorBtn = makeFormButton("Sensor", sendSensor, [
     { label: "num_beams", placeholder: 60 },
-    { label: "max_distance", placeholder: 1000, step: "any" },
+    { label: "max_range", placeholder: 1000.0, step: "any" },
     { label: "noise_std", placeholder: 0, step: "any" },
     { label: "fov", placeholder: 6.28, step: "any" }
   ]);
@@ -271,7 +271,6 @@ export async function render({ model, el }) {
 
   async function sendSensor(params = {}) {
     try {
-      // params is an object built from the form inputs (e.g. { num_beams: 60, max_distance: 1000 })
       const res = await fetch(`http://${endpoint}/robot_scenario_sensor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
