@@ -66,16 +66,17 @@ def robot_scenario_step():
 @app.route('/robot_scenario_sensor', methods=['POST'])
 def robot_scenario_sensor():
 
-    num_beams = 60
-    fov = 2 * math.pi
-    max_range = 10.0
-    noise_std = 0.0
+    request_data = request.json
+    num_beams = request_data.get("num_beams", 60)
+    fov = request_data.get("fov", 2 * math.pi)
+    max_range = request_data.get("max_range", 1000.0)
+    noise_std = request_data.get("noise_std", 0.0)
 
     origin = player_body.position
 
     ranges, points, normals, angles = lidar_scan(
         world, origin, player_body.angle, robot_body=player_body,
-        num_beams=num_beams, fov=fov, noise_std=noise_std
+        num_beams=num_beams, fov=fov, noise_std=noise_std, max_range=max_range
     )
 
     hit_points = []
