@@ -1,2 +1,105 @@
-<div id="root"></div>
-<script src="component_example.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SVG Rotation Example</title>
+    <style>
+      /* Optional: Add smooth transition for the turret */
+      #turret {
+        transition: transform 0.2s ease-out;
+        /* Ensures rotation happens around the visual center of the turret group.
+           The main turret group itself is translated to (88,70) in the SVG.
+           '50% 50%' will rotate it around the center of its own bounding box. */
+        /* transform-origin: 50% 50%; */
+      }
+    </style>
+</head>
+<body>
+
+    <h1>My Rotating Robot</h1>
+
+    <!-- Embedded player.svg content with the new combined turret group -->
+    <!-- You will replace this entire <svg> block with the *full* content of your player.svg file
+         after you've applied the changes from step 1 to player.svg -->
+         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400" role="img" aria-labelledby="titleDesc">
+            <title id="titleDesc">Top-down robot tank</title>
+          
+            <!-- defs for reusable styles -->
+            <defs>
+              <style>
+                .track { fill: #2b2f33; stroke: #1a1c1f; stroke-width: 2px; }
+                .tread { fill: #151617; }
+                .body { fill: #5a8ea6; stroke: #2b6a79; stroke-width: 2px; }
+                .turret { fill: #3e6b78; stroke: #264e56; stroke-width: 2px; }
+                .barrel { fill: #2b3a3e; stroke: #1a272a; stroke-width: 1px; }
+                .hatch { fill: #8fb8c8; stroke: #2b6a79; stroke-width: 1.5px; }
+                .sensor { fill: #ffd24d; stroke: #b37f09; stroke-width: 0.8px; }
+                .detail { fill: none; stroke: rgba(0,0,0,0.12); stroke-width: 1px; }
+              </style>
+              <!-- small wheel tread as symbol for repeating -->
+              <symbol id="tread" viewBox="0 0 10 10">
+                <circle cx="5" cy="5" r="4" class="tread"/>
+              </symbol>
+            </defs>
+          
+            <!-- left track -->
+            <g transform="translate(12,20)">
+              <rect class="track" x="0" y="0" width="36" height="160" rx="8" ry="8"/>
+            </g>
+          
+            <!-- right track -->
+            <g transform="translate(152,20)">
+              <rect class="track" x="0" y="0" width="36" height="160" rx="8" ry="8"/>
+            </g>
+          
+            <!-- main body -->
+            <g transform="translate(48,30)">
+              <rect class="body" x="0" y="0" width="104" height="140" rx="12" ry="12"/>
+              <!-- subtle panel lines -->
+              <line x1="10" y1="18" x2="94" y2="18" class="detail"/>
+              <line x1="10" y1="38" x2="94" y2="38" class="detail"/>
+              <line x1="10" y1="118" x2="94" y2="118" class="detail"/>
+              <!-- rear vent -->
+              <rect x="30" y="110" width="44" height="12" rx="3" ry="3" fill="#3b5560" opacity="0.9"/>
+            </g>
+          
+            <!-- turret (center) -->
+            <g id="turret" transform="translate(88,70)">
+              <circle class="turret" cx="0" cy="0" r="28"/>
+              <!-- hatch -->
+              <ellipse class="hatch" cx="-6" cy="-2" rx="10" ry="6"/>
+              <!-- top sensor / camera -->
+              <circle class="sensor" cx="16" cy="-12" r="4"/>
+              <!-- small LED cluster -->
+              <circle cx="-14" cy="12" r="2.5" fill="#ffd24d" stroke="#b37f09" stroke-width="0.6"/>
+              <circle cx="-18" cy="8" r="2.5" fill="#ffd24d" stroke="#b37f09" stroke-width="0.6"/>
+              <circle cx="-10" cy="8" r="2.5" fill="#ffd24d" stroke="#b37f09" stroke-width="0.6"/>
+              <g transform="translate(10,-10)">
+                <!-- barrel base -->
+                <rect class="barrel" x="-5" y="-34" width="10" height="34" rx="2" ry="2"/>
+                <!-- muzzle -->
+                <rect class="barrel" x="-6.5" y="-44" width="13" height="10" rx="2" ry="2"/>
+                <!-- barrel shadow / detail -->
+                <line x1="-3" y1="-10" x2="3" y2="-10" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+              </g>
+            </g>
+          
+            <!-- subtle extras: antenna and repair bay marker -->
+            <g transform="translate(78,40)">
+              <!-- antenna -->
+              <rect x="0" y="0" width="2" height="14" rx="1" ry="1" fill="#1a1c1f"/>
+              <circle cx="1" cy="-2" r="2" fill="#ff6b6b" stroke="#a33a3a" stroke-width="0.6"/>
+            </g>
+          
+            <g transform="translate(120,142)">
+              <!-- small repair hatch icon -->
+              <rect x="-12" y="-6" width="24" height="12" rx="3" ry="3" fill="#4a6b73" opacity="0.95"/>
+              <path d="M -8 0 L -2 0 M 2 0 L 8 0 M -3 -3 L 3 3 M -3 3 L 3 -3" stroke="#cfe8ef" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+          </svg>
+
+    <button id="rotateButton">Rotate Turret</button>
+
+    <!-- Link your separate JavaScript file -->
+    <script src="index.js"></script>
+</body>
+</html>
