@@ -1,0 +1,13 @@
+{
+  "name": "rect_triangle_map",
+  "ppm": 10,
+  "shapes": [
+    { "type": "rectangle", "x": 400, "y": 0, "width": 800, "height": 30 },
+    { "type": "rectangle", "x": 400, "y": 590, "width": 800, "height": 20 },
+    { "type": "rectangle", "x": 10, "y": 500, "width": 20, "height": 1000 },
+    { "type": "rectangle", "x": 790, "y": 500, "width": 20, "height": 1000 },
+
+    { "type": "triangle", "vertices": [[100,200],[200,400],[50,400]] },
+    { "type": "triangle", "vertices": [[700,200],[650,400],[750,400]] }
+  ]
+}
