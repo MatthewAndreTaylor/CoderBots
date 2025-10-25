@@ -127,7 +127,7 @@ export async function render({ model, el }) {
     { label: "num_beams", placeholder: 60 },
     { label: "max_range", placeholder: 1000.0, step: "any" },
     { label: "noise_std", placeholder: 0, step: "any" },
-    { label: "fov", placeholder: 6.28, step: "any" }
+    { label: "fov", placeholder: 6.28, step: "any" },
   ]);
   const stepBtn = makeButton("Step", sendStep);
 
@@ -163,7 +163,7 @@ export async function render({ model, el }) {
     bg.fill = "#fafafa";
     bg.noStroke();
     // Start the animation loop so any bound update handlers run
-    if (typeof two.play === 'function') {
+    if (typeof two.play === "function") {
       try {
         two.play();
       } catch (e) {
@@ -204,6 +204,15 @@ export async function render({ model, el }) {
         tri.fill = "#ddd";
         tri.stroke = "#333";
         tri.linewidth = 1;
+      } else if (shape.type === "goal") {
+        const gx = shape.x;
+        const gy = shape.y;
+        const gw = shape.width;
+        const gh = shape.height;
+        const goal = t.makeRectangle(gx, gy, gw, gh);
+        goal.fill = "#0f0";
+        goal.stroke = "#333";
+        goal.linewidth = 1;
       }
     });
 
@@ -271,9 +280,9 @@ export async function render({ model, el }) {
     // Bind the update handler only once so we don't accumulate handlers on
     // repeated sensor calls. This will progressively fade the dots.
     if (!twoUpdateBound) {
-      two.bind('update', function(frameCount, timeDelta) {
+      two.bind("update", function (frameCount, timeDelta) {
         // timeDelta may be provided in ms depending on Two.js; convert to seconds
-        const dt = (typeof timeDelta === 'number') ? timeDelta / 1000 : 0.016;
+        const dt = typeof timeDelta === "number" ? timeDelta / 1000 : 0.016;
         for (const dot of sensorDots) {
           if (dot.opacity > 0) {
             dot.elapsed += dt;
@@ -296,7 +305,7 @@ export async function render({ model, el }) {
     dot.fadeDuration = 0.5; // seconds
     dot.elapsed = 0;
     sensorDots.push(dot);
-}
+  }
 
   async function sendMove(x, y, rotation = 0) {
     try {
@@ -320,7 +329,7 @@ export async function render({ model, el }) {
       });
       const data = await res.json();
       // server returns { "hit_points": [[x,y], ...] }
-      const hits = data.hit_points || data.hitPoints || [];
+      const hits = data.hit_points || [];
       drawSensorHits(hits);
       dataPre.textContent = JSON.stringify(data, null, 2);
       messageEl.textContent = "Sensor data received.";
@@ -344,6 +353,23 @@ export async function render({ model, el }) {
       console.error(err);
     }
   }
+
+  model.on("change:result", async () => {
+    const newValue = model.get("result");
+
+    messageEl.textContent = `Updated: ${newValue.type}`;
+
+    if (newValue.type === "sensor") {
+      const hits = newValue.data?.hit_points || [];
+      drawSensorHits(hits);
+      dataPre.textContent = JSON.stringify(newValue.data, null, 2);
+    } else if (newValue.type === "step") {
+      drawPlayer(newValue.data.player);
+      dataPre.textContent = JSON.stringify(newValue.data, null, 2);
+    } else {
+      console.warn("Unknown result type:", newValue.type);
+    }
+  });
 
   await fetchEnv();
 }

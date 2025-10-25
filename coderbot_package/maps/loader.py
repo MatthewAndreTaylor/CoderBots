@@ -49,6 +49,7 @@ def load_map(world, filepath, ppm=10):
             shape.SetAsBox(hx, hy, center, angle)
             body = world.CreateStaticBody(position=(0, 0))
             body.CreateFixture(shape=shape, density=0.0, friction=0.3, restitution=0.0)
+            body.userData = "obstacle"
 
         elif stype in ("triangle", "polygon"):
             verts = s.get("vertices", [])
@@ -64,6 +65,26 @@ def load_map(world, filepath, ppm=10):
             shape = b2PolygonShape(vertices=verts_m)
             body = world.CreateStaticBody(position=(0, 0))
             body.CreateFixture(shape=shape, density=0.0, friction=0.3, restitution=0.0)
+            body.userData = "obstacle"
+
+        elif stype == "goal":
+            x = s.get("x", 0)
+            y = s.get("y", 0)
+            w = s.get("width", 10)
+            h = s.get("height", 10)
+            angle = math.radians(s.get("angle", 0))
+
+            hx = (w / 2.0) / ppm
+            hy = (h / 2.0) / ppm
+            center = (x / ppm, y / ppm)
+
+            # Create polygon shape and set as box using SetAsBox (avoids unsupported kwargs)
+            shape = b2PolygonShape()
+            # b2PolygonShape.SetAsBox expects positional args: hx, hy, center, angle
+            shape.SetAsBox(hx, hy, center, angle)
+            body = world.CreateStaticBody(position=(0, 0))
+            body.CreateFixture(shape=shape, density=0.0, friction=0.3, restitution=0.0)
+            body.userData = "goal"
 
         else:
             # Unknown shape type; skip
