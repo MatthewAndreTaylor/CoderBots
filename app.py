@@ -66,7 +66,7 @@ def robot_scenario_step():
 @app.route('/robot_scenario_sensor', methods=['POST'])
 def robot_scenario_sensor():
 
-    num_beams = 360
+    num_beams = 60
     fov = 2 * math.pi
     max_range = 10.0
     noise_std = 0.0
@@ -87,10 +87,6 @@ def robot_scenario_sensor():
         hit_points.append((x_end, y_end))
 
     lidar_data = {
-        "ranges": ranges,
-        "points": points,
-        "normals": normals,
-        "angles": angles,
         "hit_points": hit_points
     }
 

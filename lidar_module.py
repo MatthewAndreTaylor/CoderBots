@@ -29,7 +29,7 @@ class LidarCallback(b2RayCastCallback):
 
 def lidar_scan(world, origin, yaw, robot_body=None,
                num_beams=360, fov=2*math.pi,
-               max_range=10.0, noise_std=0.0):
+               max_range=1000.0, noise_std=0.0):
     origin = b2Vec2(origin)
     angles = np.linspace(-fov/2, fov/2, num_beams) + yaw
     ranges = np.full(num_beams, max_range)
