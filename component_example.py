@@ -22,6 +22,9 @@ class RobotPanel(anywidget.AnyWidget):
     def __init__(self):
         super().__init__()
         self.reset()
+
+
+    def show(self):
         display(self)
 
     def robot_env(self):
@@ -33,11 +36,12 @@ class RobotPanel(anywidget.AnyWidget):
     def step(self, num_steps):
         """Signal to step the robot."""
         url = f"http://{self.endpoint}/robot_scenario_step"
+        l = len(b"data: ")
         with requests.post(url, json={"num_steps": num_steps}, stream=True) as r:
             for line in r.iter_lines():
                 if line:
                     if line.startswith(b"data: "):
-                        data = line[len(b"data: "):]
+                        data = line[l:]
                         json_data = json.loads(data)
                         yield json_data
                         self._set_result("step", json_data)
