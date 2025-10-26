@@ -1,5 +1,3 @@
-// main.js
-
 window.addEventListener('DOMContentLoaded', () => {
   const turretElement = document.getElementById('turret');
 

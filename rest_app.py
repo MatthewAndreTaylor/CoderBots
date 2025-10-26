@@ -36,11 +36,6 @@ velocity = (0, 0)
 move_speed_px = 240
 
 
-@app.route("/", methods=["GET", "POST"])
-def home():
-    return render_template("index.html")
-
-
 @app.route("/robot_scenario_env")
 def render_robot_scenario():
     player_data = {
@@ -81,7 +76,7 @@ def robot_scenario_sensor():
 
     origin = player_body.position
 
-    ranges, tags, normals, angles = lidar_scan(
+    hit_points, tags = lidar_scan(
         world,
         origin,
         player_body.angle,
@@ -92,16 +87,7 @@ def robot_scenario_sensor():
         max_range=max_range,
     )
 
-    hit_points = []
-
-    for i, dist in enumerate(ranges):
-        a = angles[i]
-        x_end = origin[0] + dist * math.cos(a)
-        y_end = origin[1] + dist * math.sin(a)
-        hit_points.append((x_end, y_end))
-
     lidar_data = {"hit_points": hit_points, "tags": tags}
-
     return jsonify(lidar_data)
 
 
