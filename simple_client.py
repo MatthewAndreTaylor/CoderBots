@@ -1,5 +1,5 @@
 import math
-from Box2D import b2World, b2CircleShape
+from Box2D import b2World, b2CircleShape, b2ContactListener, b2Filter
 from coderbot_package.maps.loader import load_map
 from lidar_module import lidar_scan
 import pathlib
@@ -8,9 +8,28 @@ import traitlets
 from IPython.display import display, update_display
 import time
 
+class ProjectileContactListener(b2ContactListener):
+    def BeginContact(self, contact):
+        body_a = contact.fixtureA.body
+        body_b = contact.fixtureB.body
+        bodies = (body_a, body_b)
+
+        for body in bodies:
+            if getattr(body, "userData", None) != "projectile":
+                continue
+
+            other = body_b if body is body_a else body_a
+            if getattr(other, "userData", None) in ("obstacle", "goal"):
+                body.userData = "destroy"
+                        
+                        
+CATEGORY_PLAYER = 0x0002
+CATEGORY_PROJECTILE = 0x0004
+
 WIDTH, HEIGHT = 800, 1000
 ppm = 10
 world = b2World(gravity=(0, 0), doSleep=True)
+world.contactListener = ProjectileContactListener()
 
 # Load a map from a JSON file (shapes defined in pixels). The loader converts
 # pixels -> meters using the ppm (pixels per meter) value. Capture the loaded
@@ -22,9 +41,11 @@ player_radius_px = 10
 player_body = world.CreateDynamicBody(
     position=(WIDTH / 2 / ppm, HEIGHT / 2 / ppm), linearDamping=0.5, angularDamping=0.5
 )
-player_body.CreateFixture(
+player_fixture = player_body.CreateFixture(
     shape=b2CircleShape(radius=player_radius_px / ppm), density=1.0, friction=0.3
 )
+player_fixture.filterData.categoryBits = CATEGORY_PLAYER
+player_fixture.filterData.maskBits = 0xFFFF & ~CATEGORY_PROJECTILE
 
 velocity = (0, 0)
 move_speed_px = 240
@@ -33,6 +54,7 @@ player_initial_data = {
     "pos": [float(player_body.position.x), float(player_body.position.y)],
     # "yaw": player_body.angle,
 }
+
 
 
 class RobotPanel(anywidget.AnyWidget):
@@ -53,10 +75,13 @@ class RobotPanel(anywidget.AnyWidget):
     def __init__(self):
         super().__init__()
         self.reset()
+        
+        self.projectiles = []
 
     def show(self):
         display(self)
-        time.sleep(1.0)
+        
+        time.sleep(1.0)  # allow time for display to initialize
         
         
     def robot_env(self):
@@ -76,8 +101,19 @@ class RobotPanel(anywidget.AnyWidget):
                 "pos": [float(player_body.position.x), float(player_body.position.y)],
                 # "yaw": player_body.angle,
             }
-            self._set_result("step", player_data)
-            yield player_data
+            live_projectiles = []
+            proj_data = []
+            for proj in self.projectiles:
+                if proj.userData == "destroy" or not (0 <= proj.position.x <= WIDTH/ppm and 0 <= proj.position.y <= HEIGHT/ppm):
+                    world.DestroyBody(proj)
+                else:
+                    live_projectiles.append(proj)
+                    proj_data.append([proj.position.x, proj.position.y])
+            self.projectiles = live_projectiles
+
+            self._set_result("step", {"robot": player_data, "projectiles": proj_data})
+            yield {"robot": player_data, "projectiles": proj_data}
+
             
     
     def sensor(self, num_beams=60, max_range=1000.0, noise_std=0, fov=6.28):
@@ -113,6 +149,39 @@ class RobotPanel(anywidget.AnyWidget):
             player_body.linearVelocity = (vx * speed_m, vy * speed_m)
         else:
             player_body.linearVelocity = (0, 0)
+            
+    
+    def fire(self, speed=5000.0, angle=None):
+        """Fire a projectile from the robot's current position."""
+        if angle is None:
+            # Use the robot's current facing angle
+            angle = 0.0  # or use player_body.angle if you track yaw
+
+        # Create a small projectile body
+        radius = 2 / ppm  # 2 pixels radius
+        proj_body = world.CreateDynamicBody(
+            position=player_body.position,
+            bullet=True,  # improves fast-moving body collision
+            userData="projectile",
+        )
+        proj_body.CreateFixture(
+            shape=b2CircleShape(radius=radius),
+            density=1.0,
+            friction=0.0,
+            restitution=0.5,
+            filter=b2Filter(
+                categoryBits=CATEGORY_PROJECTILE,
+                maskBits=0xFFFF & ~CATEGORY_PLAYER
+            )
+        )
+
+        # Initial velocity
+        vx = math.cos(angle) * speed / ppm
+        vy = math.sin(angle) * speed / ppm
+        proj_body.linearVelocity = (vx, vy)
+
+        self.projectiles.append(proj_body)
+        self._set_result("fire", {"pos": list(proj_body.position), "velocity": (vx, vy)})
             
             
     def reset(self):

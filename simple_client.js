@@ -37,22 +37,17 @@ export async function render({ model, el }) {
   let two = null;
   let playerCircle = null;
   let sensorDots = [];
+  let projectileCircles = [];
   let twoUpdateBound = false;
 
   function ensureTwo() {
     if (two) return two;
     two = new Two({ width: SVG_W, height: SVG_H }).appendTo(canvasContainer);
-    // light background rectangle so canvas looks similar to previous SVG
     const bg = two.makeRectangle(SVG_W / 2, SVG_H / 2, SVG_W, SVG_H);
     bg.fill = "#fafafa";
     bg.noStroke();
-    // Start the animation loop so any bound update handlers run
     if (typeof two.play === "function") {
-      try {
-        two.play();
-      } catch (e) {
-        // ignore if play is unavailable for some reason
-      }
+      try { two.play(); } catch (e) {}
     }
     two.update();
     return two;
@@ -60,12 +55,8 @@ export async function render({ model, el }) {
 
   function drawMap(map) {
     if (!map) return;
-    // Shapes in the map JSON are in pixels. ppm is pixels-per-meter and is
-    // used to convert physics (meters) -> pixels for the player only.
     PPM = map.ppm;
-
     const t = ensureTwo();
-    // clear scene and add background
     t.clear();
     const bg = t.makeRectangle(SVG_W / 2, SVG_H / 2, SVG_W, SVG_H);
     bg.fill = "#fafafa";
@@ -73,12 +64,7 @@ export async function render({ model, el }) {
 
     map.shapes.forEach((shape) => {
       if (shape.type === "rectangle") {
-        // map rectangle x,y are center coords in pixels
-        const rx = shape.x;
-        const ry = shape.y;
-        const rw = shape.width;
-        const rh = shape.height;
-        const rect = t.makeRectangle(rx, ry, rw, rh);
+        const rect = t.makeRectangle(shape.x, shape.y, shape.width, shape.height);
         rect.fill = "#ccc";
         rect.stroke = "#333";
         rect.linewidth = 1;
@@ -89,122 +75,80 @@ export async function render({ model, el }) {
         tri.stroke = "#333";
         tri.linewidth = 1;
       } else if (shape.type === "goal") {
-        const gx = shape.x;
-        const gy = shape.y;
-        const gw = shape.width;
-        const gh = shape.height;
-        const goal = t.makeRectangle(gx, gy, gw, gh);
+        const goal = t.makeRectangle(shape.x, shape.y, shape.width, shape.height);
         goal.fill = "#0f0";
         goal.stroke = "#333";
         goal.linewidth = 1;
       }
     });
 
-    t.update();
+    two.update();
   }
 
   function drawPlayer(player) {
-  if (!player) return;
+    if (!player) return;
 
-  const pos = player.pos;
-  let targetX = 0, targetY = 0;
-  if (Array.isArray(pos)) {
-    targetX = pos[0] * PPM;
-    targetY = pos[1] * PPM;
-  } else if (pos && typeof pos.x === "number") {
-    targetX = pos.x * PPM;
-    targetY = pos.y * PPM;
-  } else {
-    return; // unknown format
+    const pos = player.pos;
+    let targetX = Array.isArray(pos) ? pos[0] * PPM : pos.x * PPM;
+    let targetY = Array.isArray(pos) ? pos[1] * PPM : pos.y * PPM;
+
+    const t = ensureTwo();
+
+    if (!playerCircle) {
+      playerCircle = t.makeCircle(targetX, targetY, 10);
+      playerCircle.fill = "#e44";
+      playerCircle.noStroke();
+      playerCircle.current = { x: targetX, y: targetY };
+    } else {
+      playerCircle.target = { x: targetX, y: targetY };
+    }
+
+    if (!playerCircle.updateBound) {
+      playerCircle.updateBound = true;
+      t.bind("update", function (frameCount, timeDelta) {
+        if (!playerCircle || !playerCircle.target) return;
+        const dt = typeof timeDelta === "number" ? timeDelta / 1000 : 0.016;
+        const speed = 2.0;
+        const lerp = (a, b, f) => a + (b - a) * f;
+        const alpha = Math.min(speed * dt, 1.0);
+
+        playerCircle.current.x = lerp(playerCircle.current.x, playerCircle.target.x, alpha);
+        playerCircle.current.y = lerp(playerCircle.current.y, playerCircle.target.y, alpha);
+
+        playerCircle.translation.set(playerCircle.current.x, playerCircle.current.y);
+      });
+    }
+
+    two.update();
   }
-
-  const t = ensureTwo();
-
-  if (!playerCircle) {
-    // create player circle
-    playerCircle = t.makeCircle(targetX, targetY, 10);
-    playerCircle.fill = "#e44";
-    playerCircle.noStroke();
-    playerCircle.current = { x: targetX, y: targetY };
-  } else {
-    // set the target for lerping
-    playerCircle.target = { x: targetX, y: targetY };
-  }
-
-  // only bind the update handler once
-  if (!playerCircle.updateBound) {
-    playerCircle.updateBound = true;
-
-    t.bind("update", function (frameCount, timeDelta) {
-      if (!playerCircle || !playerCircle.target) return;
-
-      const dt = typeof timeDelta === "number" ? timeDelta / 1000 : 0.016;
-      const speed = 2.0; // higher = faster interpolation
-
-      const cx = playerCircle.current.x;
-      const cy = playerCircle.current.y;
-      const tx = playerCircle.target.x;
-      const ty = playerCircle.target.y;
-
-      // linear interpolation
-      const lerp = (a, b, f) => a + (b - a) * f;
-      const alpha = Math.min(speed * dt, 1.0);
-
-      playerCircle.current.x = lerp(cx, tx, alpha);
-      playerCircle.current.y = lerp(cy, ty, alpha);
-
-      playerCircle.translation.set(playerCircle.current.x, playerCircle.current.y);
-    });
-  }
-
-  t.update();
-}
 
   function drawSensorHits(points) {
-    // points: array of [x,y] in meters or objects {x,y}. Convert by PPM.
     if (!two) ensureTwo();
-    // remove previous dots
-    try {
-      sensorDots.forEach((d) => two.remove(d));
-    } catch (e) {
-      // ignore if removal fails
-    }
+    sensorDots.forEach((d) => two.remove(d));
     sensorDots = [];
+
     if (!Array.isArray(points)) return;
     points.forEach((pt) => {
-      let x = 0,
-        y = 0;
-      if (Array.isArray(pt)) {
-        x = pt[0];
-        y = pt[1];
-      } else if (pt && typeof pt.x === "number") {
-        x = pt.x;
-        y = pt.y;
-      } else {
-        return;
-      }
+      let x = Array.isArray(pt) ? pt[0] : pt.x;
+      let y = Array.isArray(pt) ? pt[1] : pt.y;
       const cx = x * PPM;
       const cy = y * PPM;
       createDot(cx, cy);
     });
 
-    // Bind the update handler only once so we don't accumulate handlers on
-    // repeated sensor calls. This will progressively fade the dots.
     if (!twoUpdateBound) {
       two.bind("update", function (frameCount, timeDelta) {
-        // timeDelta may be provided in ms depending on Two.js; convert to seconds
         const dt = typeof timeDelta === "number" ? timeDelta / 1000 : 0.016;
-        for (const dot of sensorDots) {
+        sensorDots.forEach((dot) => {
           if (dot.opacity > 0) {
             dot.elapsed += dt;
             dot.opacity = Math.max(1 - dot.elapsed / dot.fadeDuration, 0);
           }
-        }
+        });
       });
       twoUpdateBound = true;
     }
 
-    // Ensure the scene renders immediately with the new dots
     two.update();
   }
 
@@ -213,9 +157,29 @@ export async function render({ model, el }) {
     dot.fill = "#ff00ffff";
     dot.noStroke();
     dot.opacity = 1;
-    dot.fadeDuration = 0.5; // seconds
+    dot.fadeDuration = 0.5;
     dot.elapsed = 0;
     sensorDots.push(dot);
+  }
+
+  function drawProjectiles(projectiles) {
+    if (!two) ensureTwo();
+    projectileCircles.forEach((d) => {
+      setTimeout(() => two.remove(d), 100);
+    });
+    projectileCircles = [];
+
+    if (!Array.isArray(projectiles)) return;
+    projectiles.forEach((proj) => {
+      const x = Array.isArray(proj) ? proj[0] * PPM : proj.x * PPM;
+      const y = Array.isArray(proj) ? proj[1] * PPM : proj.y * PPM;
+      const circle = two.makeCircle(x, y, 4);
+      circle.fill = "#00f";
+      circle.noStroke();
+      projectileCircles.push(circle);
+    });
+
+    two.update();
   }
 
   model.on("change:result", async () => {
@@ -224,10 +188,12 @@ export async function render({ model, el }) {
     if (newValue.type === "sensor") {
       const hits = newValue.data?.hit_points || [];
       drawSensorHits(hits);
-      dataPre.textContent = JSON.stringify(newValue.data, null, 2);
     } else if (newValue.type === "step") {
-      drawPlayer(newValue.data);
-      dataPre.textContent = JSON.stringify(newValue.data, null, 2);
+      drawPlayer(newValue.data.robot);
+      drawProjectiles(newValue.data.projectiles || []);
+    } else if (newValue.type === "fire") {
+      // Optional: instant projectile flash on fire
+      drawProjectiles(newValue.data ? [newValue.data.pos] : []);
     } else {
       console.warn("Unknown result type:", newValue.type);
     }
