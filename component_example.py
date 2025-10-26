@@ -1,3 +1,4 @@
+import json
 import pathlib
 import anywidget
 import traitlets
@@ -14,22 +15,32 @@ class RobotPanel(anywidget.AnyWidget):
 
     result = traitlets.Dict().tag(sync=True)
 
+    def _set_result(self, result_type, data):
+        # Always create a new dict reference to trigger frontend update
+        self.result = {"type": result_type, "data": data, "_sync": id(data)}
+
     def __init__(self):
         super().__init__()
         self.reset()
         display(self)
 
-    def _set_result(self, result_type, data):
-        # Always create a new dict reference to trigger frontend update
-        self.result = {"type": result_type, "data": data, "_sync": id(data)}
+    def robot_env(self):
+        """Get the current environment of the robot."""
+        url = f"http://{self.endpoint}/robot_scenario_env"
+        response = requests.get(url)
+        return response.json()
 
-    def step(self, time):
+    def step(self, num_steps):
         """Signal to step the robot."""
         url = f"http://{self.endpoint}/robot_scenario_step"
-        response = requests.post(url, json={"t": time})
-        data = response.json()
-        self._set_result("step", data)
-        return response.json()
+        with requests.post(url, json={"num_steps": num_steps}, stream=True) as r:
+            for line in r.iter_lines():
+                if line:
+                    if line.startswith(b"data: "):
+                        data = line[len(b"data: "):]
+                        json_data = json.loads(data)
+                        yield json_data
+                        self._set_result("step", json_data)
 
     def sensor(self, num_beams=60, max_range=1000.0, noise_std=0, fov=6.28):
         """Signal to get sensor data."""
@@ -42,7 +53,6 @@ class RobotPanel(anywidget.AnyWidget):
         }
         response = requests.post(url, json=data)
         self._set_result("sensor", response.json())
-
         return response.json()
 
     def move(self, x, y, rotation):
