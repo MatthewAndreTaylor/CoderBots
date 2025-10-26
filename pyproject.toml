@@ -6,7 +6,11 @@ authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},
 ]
 
-contributors = []
+[tool.coderbots]
+contributors = [
+  { name = "Matthew Taylor" },
+  { name = "Terry Liu" }
+]
 
 dependencies = [
     "box2d-py",
