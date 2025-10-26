@@ -10,6 +10,7 @@
     { "type": "triangle", "vertices": [[100,200],[200,400],[50,400]] },
     { "type": "triangle", "vertices": [[700,200],[650,400],[750,400]] },
 
-    { "type": "goal", "x": 400, "y": 300, "width": 50, "height": 50 }
+    { "type": "goal", "x": 400, "y": 300, "width": 20, "height": 20 },
+    { "type": "goal", "x": 70, "y": 240, "width": 20, "height": 20 }
   ]
 }
