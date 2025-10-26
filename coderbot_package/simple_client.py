@@ -1,7 +1,7 @@
 import math
 from Box2D import b2World, b2CircleShape, b2ContactListener, b2Filter
 from coderbot_package.maps.loader import load_map
-from lidar_module import lidar_scan
+from .lidar_module import lidar_scan
 import pathlib
 import anywidget
 import traitlets
@@ -66,7 +66,6 @@ player_initial_data = {
     "pos": [float(player_body.position.x), float(player_body.position.y)],
     # "yaw": player_body.angle,
 }
-
 
 
 class RobotPanel(anywidget.AnyWidget):
