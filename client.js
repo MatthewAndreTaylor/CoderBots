@@ -147,7 +147,7 @@ export async function render({ model, el }) {
       const res = await fetch(`http://${endpoint}/robot_scenario_env`);
       const data = await res.json();
       drawMap(data.map);
-      drawPlayer(data.player);
+      drawPlayer(data.robot);
       messageEl.textContent = "Map loaded.";
     } catch (err) {
       messageEl.textContent = "Failed to load environment.";
@@ -220,34 +220,61 @@ export async function render({ model, el }) {
   }
 
   function drawPlayer(player) {
-    if (!player) return;
-    const pos = player.position;
-    let px = 0,
-      py = 0;
-    if (Array.isArray(pos)) {
-      px = pos[0] * PPM;
-      py = pos[1] * PPM;
-    } else if (pos && typeof pos.x === "number") {
-      px = pos.x * PPM;
-      py = pos.y * PPM;
-    } else if (player.position && player.position.x !== undefined) {
-      px = player.position.x * PPM;
-      py = player.position.y * PPM;
-    } else {
-      // unknown format; bail
-      return;
-    }
+  if (!player) return;
 
-    const t = ensureTwo();
-    if (!playerCircle) {
-      playerCircle = t.makeCircle(px, py, 10); // player_radius_px
-      playerCircle.fill = "#e44";
-      playerCircle.noStroke();
-    } else {
-      playerCircle.translation.set(px, py);
-    }
-    t.update();
+  const pos = player.position;
+  let targetX = 0, targetY = 0;
+  if (Array.isArray(pos)) {
+    targetX = pos[0] * PPM;
+    targetY = pos[1] * PPM;
+  } else if (pos && typeof pos.x === "number") {
+    targetX = pos.x * PPM;
+    targetY = pos.y * PPM;
+  } else {
+    return; // unknown format
   }
+
+  const t = ensureTwo();
+
+  if (!playerCircle) {
+    // create player circle
+    playerCircle = t.makeCircle(targetX, targetY, 10);
+    playerCircle.fill = "#e44";
+    playerCircle.noStroke();
+    playerCircle.current = { x: targetX, y: targetY };
+  } else {
+    // set the target for lerping
+    playerCircle.target = { x: targetX, y: targetY };
+  }
+
+  // only bind the update handler once
+  if (!playerCircle.updateBound) {
+    playerCircle.updateBound = true;
+
+    t.bind("update", function (frameCount, timeDelta) {
+      if (!playerCircle || !playerCircle.target) return;
+
+      const dt = typeof timeDelta === "number" ? timeDelta / 1000 : 0.016;
+      const speed = 1.0; // higher = faster interpolation
+
+      const cx = playerCircle.current.x;
+      const cy = playerCircle.current.y;
+      const tx = playerCircle.target.x;
+      const ty = playerCircle.target.y;
+
+      // linear interpolation
+      const lerp = (a, b, f) => a + (b - a) * f;
+      const alpha = Math.min(speed * dt, 1.0);
+
+      playerCircle.current.x = lerp(cx, tx, alpha);
+      playerCircle.current.y = lerp(cy, ty, alpha);
+
+      playerCircle.translation.set(playerCircle.current.x, playerCircle.current.y);
+    });
+  }
+
+  t.update();
+}
 
   function drawSensorHits(points) {
     // points: array of [x,y] in meters or objects {x,y}. Convert by PPM.
@@ -341,10 +368,12 @@ export async function render({ model, el }) {
   async function sendStep() {
     try {
       const res = await fetch(`http://${endpoint}/robot_scenario_step`, {
-        method: "GET",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ t: 1 })
       });
       const data = await res.json();
-      const player = data.player || data;
+      const player = data.robot || data;
       drawPlayer(player);
       dataPre.textContent = JSON.stringify(player, null, 2);
       messageEl.textContent = "Stepped.";
@@ -364,7 +393,7 @@ export async function render({ model, el }) {
       drawSensorHits(hits);
       dataPre.textContent = JSON.stringify(newValue.data, null, 2);
     } else if (newValue.type === "step") {
-      drawPlayer(newValue.data.player);
+      drawPlayer(newValue.data.robot);
       dataPre.textContent = JSON.stringify(newValue.data, null, 2);
     } else {
       console.warn("Unknown result type:", newValue.type);

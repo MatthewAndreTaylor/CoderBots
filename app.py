@@ -4,6 +4,7 @@ from coderbot_package.maps.loader import load_map
 from flask_cors import CORS
 from lidar_module import lidar_scan
 import math
+from itertools import repeat
 
 # Server should send player physics data
 # when the server starts send a list
@@ -45,21 +46,24 @@ def render_robot_scenario():
         "position": [float(player_body.position.x), float(player_body.position.y)],
         "angle": player_body.angle,
     }
-    return jsonify({"map": map_data, "player": player_data})
+    return jsonify({"map": map_data, "robot": player_data})
 
 
-@app.route("/robot_scenario_step")
+@app.route("/robot_scenario_step", methods=["POST"])
 def robot_scenario_step():
+    dt = 1 / 30
+    t = request.json.get("t", 1)
+    num_steps = round(t / dt)
 
-    dt = 1 / 60
-    world.Step(dt, 1, 1)
+    for _ in repeat(None, num_steps):
+        world.Step(dt, 1, 1)
 
     # Get the player position and angle
     player_data = {
         "position": [float(player_body.position.x), float(player_body.position.y)],
         "angle": player_body.angle,
     }
-    return jsonify({"player": player_data})
+    return jsonify({"robot": player_data})
 
 
 @app.route("/robot_scenario_sensor", methods=["POST"])
@@ -117,6 +121,14 @@ def robot_scenario_move():
     else:
         player_body.linearVelocity = (0, 0)
 
+    return jsonify()
+
+
+@app.route("/robot_scenario_reset", methods=["POST"])
+def reset():
+    # Reset the player position and velocity
+    player_body.position = (WIDTH / 2 / ppm, HEIGHT / 2 / ppm)
+    player_body.linearVelocity = (0, 0)
     return jsonify()
 
 
