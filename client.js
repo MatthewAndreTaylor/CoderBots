@@ -222,7 +222,7 @@ export async function render({ model, el }) {
   function drawPlayer(player) {
   if (!player) return;
 
-  const pos = player.position;
+  const pos = player.pos;
   let targetX = 0, targetY = 0;
   if (Array.isArray(pos)) {
     targetX = pos[0] * PPM;
@@ -370,15 +370,51 @@ export async function render({ model, el }) {
       const res = await fetch(`http://${endpoint}/robot_scenario_step`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ t: 1 })
+        body: JSON.stringify({ num_steps: 20 })
       });
-      const data = await res.json();
-      const player = data.robot || data;
-      drawPlayer(player);
-      dataPre.textContent = JSON.stringify(player, null, 2);
-      messageEl.textContent = "Stepped.";
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines (newline-delimited JSON)
+        let newlineIndex;
+        while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, newlineIndex).trim();
+          buffer = buffer.slice(newlineIndex + 1);
+          if (!line) continue;
+          try {
+            const msg = JSON.parse(line);
+            drawPlayer(msg);
+            dataPre.textContent = JSON.stringify(msg, null, 2);
+            messageEl.textContent = `Stepped (stream)`;
+          } catch (e) {
+            console.error("Failed to parse stream chunk:", e, line);
+          }
+        }
+      }
+
+      // Final buffer flush
+      if (buffer.trim()) {
+        try {
+          const msg = JSON.parse(buffer.trim());
+          drawPlayer(msg);
+          dataPre.textContent = JSON.stringify(msg, null, 2);
+        } catch (e) {
+          console.error("Failed to parse final stream chunk:", e, buffer);
+        }
+      }
+
+      messageEl.textContent = "Step stream complete.";
     } catch (err) {
-      messageEl.textContent = "Step failed.";
+      messageEl.textContent = `Step failed: ${err.message || err}`;
       console.error(err);
     }
   }
@@ -393,7 +429,7 @@ export async function render({ model, el }) {
       drawSensorHits(hits);
       dataPre.textContent = JSON.stringify(newValue.data, null, 2);
     } else if (newValue.type === "step") {
-      drawPlayer(newValue.data.robot);
+      drawPlayer(newValue.data);
       dataPre.textContent = JSON.stringify(newValue.data, null, 2);
     } else {
       console.warn("Unknown result type:", newValue.type);

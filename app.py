@@ -1,9 +1,10 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, Response, render_template, jsonify, request
 from Box2D import b2World, b2CircleShape
 from coderbot_package.maps.loader import load_map
 from flask_cors import CORS
 from lidar_module import lidar_scan
 import math
+import json
 from itertools import repeat
 
 # Server should send player physics data
@@ -43,27 +44,30 @@ def home():
 @app.route("/robot_scenario_env")
 def render_robot_scenario():
     player_data = {
-        "position": [float(player_body.position.x), float(player_body.position.y)],
-        "angle": player_body.angle,
+        "pos": [float(player_body.position.x), float(player_body.position.y)],
+        # "yaw": player_body.angle,
     }
     return jsonify({"map": map_data, "robot": player_data})
 
 
 @app.route("/robot_scenario_step", methods=["POST"])
 def robot_scenario_step():
-    dt = 1 / 30
-    t = request.json.get("t", 1)
-    num_steps = round(t / dt)
+    dt = 1 / 20
+    num_steps = request.json.get("num_steps", 1)
 
-    for _ in repeat(None, num_steps):
-        world.Step(dt, 1, 1)
+    def generate():
+        for _ in repeat(None, num_steps):
+            world.Step(dt, 1, 1)
 
-    # Get the player position and angle
-    player_data = {
-        "position": [float(player_body.position.x), float(player_body.position.y)],
-        "angle": player_body.angle,
-    }
-    return jsonify({"robot": player_data})
+            player_data = {
+                "pos": [float(player_body.position.x), float(player_body.position.y)],
+                # "yaw": player_body.angle,
+            }
+
+            data = json.dumps(player_data)
+            yield f"data: {data}\n\n"
+
+    return Response(generate(), mimetype="text/event-stream")
 
 
 @app.route("/robot_scenario_sensor", methods=["POST"])
