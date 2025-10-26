@@ -129,10 +129,9 @@ export async function render({ model, el }) {
     { label: "noise_std", placeholder: 0, step: "any" },
     { label: "fov", placeholder: 6.28, step: "any" },
   ]);
-  const stepBtn = makeButton("Step", sendStep);
 
   if (controlsActive) {
-    controls.append(left, up, down, right, sensorBtn, stepBtn);
+    controls.append(left, up, down, right, sensorBtn);
   }
 
   let PPM = 10;
@@ -255,7 +254,7 @@ export async function render({ model, el }) {
       if (!playerCircle || !playerCircle.target) return;
 
       const dt = typeof timeDelta === "number" ? timeDelta / 1000 : 0.016;
-      const speed = 1.0; // higher = faster interpolation
+      const speed = 2.0; // higher = faster interpolation
 
       const cx = playerCircle.current.x;
       const cy = playerCircle.current.y;
@@ -329,7 +328,7 @@ export async function render({ model, el }) {
     dot.fill = "#ff00ffff";
     dot.noStroke();
     dot.opacity = 1;
-    dot.fadeDuration = 0.5; // seconds
+    dot.fadeDuration = 1.0; // seconds
     dot.elapsed = 0;
     sensorDots.push(dot);
   }
@@ -362,60 +361,6 @@ export async function render({ model, el }) {
       messageEl.textContent = "Sensor data received.";
     } catch (err) {
       messageEl.textContent = `Sensor failed: ${err.message}`;
-    }
-  }
-
-  async function sendStep() {
-    try {
-      const res = await fetch(`http://${endpoint}/robot_scenario_step`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ num_steps: 20 })
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        // Process complete lines (newline-delimited JSON)
-        let newlineIndex;
-        while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
-          const line = buffer.slice(0, newlineIndex).trim();
-          buffer = buffer.slice(newlineIndex + 1);
-          if (!line) continue;
-          try {
-            const msg = JSON.parse(line);
-            drawPlayer(msg);
-            dataPre.textContent = JSON.stringify(msg, null, 2);
-            messageEl.textContent = `Stepped (stream)`;
-          } catch (e) {
-            console.error("Failed to parse stream chunk:", e, line);
-          }
-        }
-      }
-
-      // Final buffer flush
-      if (buffer.trim()) {
-        try {
-          const msg = JSON.parse(buffer.trim());
-          drawPlayer(msg);
-          dataPre.textContent = JSON.stringify(msg, null, 2);
-        } catch (e) {
-          console.error("Failed to parse final stream chunk:", e, buffer);
-        }
-      }
-
-      messageEl.textContent = "Step stream complete.";
-    } catch (err) {
-      messageEl.textContent = `Step failed: ${err.message || err}`;
-      console.error(err);
     }
   }
 
