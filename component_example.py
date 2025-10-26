@@ -16,16 +16,17 @@ class RobotPanel(anywidget.AnyWidget):
 
     def __init__(self):
         super().__init__()
+        self.reset()
         display(self)
 
     def _set_result(self, result_type, data):
         # Always create a new dict reference to trigger frontend update
         self.result = {"type": result_type, "data": data, "_sync": id(data)}
 
-    def step(self):
+    def step(self, time):
         """Signal to step the robot."""
         url = f"http://{self.endpoint}/robot_scenario_step"
-        response = requests.post(url)
+        response = requests.post(url, json={"t": time})
         data = response.json()
         self._set_result("step", data)
         return response.json()
@@ -44,8 +45,14 @@ class RobotPanel(anywidget.AnyWidget):
 
         return response.json()
 
-    def move(self, dx, dy, rotation):
+    def move(self, x, y, rotation):
         """Signal to move the robot."""
         url = f"http://{self.endpoint}/robot_scenario_move"
-        data = {"dx": dx, "dy": dy, "rotation": rotation}
+        data = {"x": x, "y": y, "rotation": rotation}
         requests.post(url, json=data)
+
+
+    def reset(self):
+        """Signal to reset the robot."""
+        url = f"http://{self.endpoint}/robot_scenario_reset"
+        requests.post(url)
