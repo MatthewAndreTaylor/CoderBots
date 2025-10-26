@@ -7,7 +7,7 @@ from IPython.display import display
 
 
 class RobotPanel(anywidget.AnyWidget):
-    _esm = pathlib.Path("client.js")
+    _esm = pathlib.Path("rest_client.js")
 
     endpoint = traitlets.Unicode("localhost:5000").tag(sync=True)
     title = traitlets.Unicode("Robot Control Panel").tag(sync=True)
