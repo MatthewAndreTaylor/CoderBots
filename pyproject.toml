@@ -1,5 +1,5 @@
 [project]
-name = "coderbots"
+name = "coderbot-sim"
 version = "0.0.1"
 description = "starting robotics with simple simulation environments"
 authors = [
