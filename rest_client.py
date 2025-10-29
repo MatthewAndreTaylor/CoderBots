@@ -9,7 +9,7 @@ from IPython.display import display
 class RobotPanel(anywidget.AnyWidget):
     _esm = pathlib.Path("rest_client.js")
 
-    endpoint = traitlets.Unicode("localhost:5000").tag(sync=True)
+    endpoint = traitlets.Unicode().tag(sync=True)
     title = traitlets.Unicode("Robot Control Panel").tag(sync=True)
     controls = traitlets.Bool(default_value=False).tag(sync=True)
 
@@ -19,8 +19,9 @@ class RobotPanel(anywidget.AnyWidget):
         # Always create a new dict reference to trigger frontend update
         self.result = {"type": result_type, "data": data, "_sync": id(data)}
 
-    def __init__(self):
+    def __init__(self, endpoint = "localhost:5000"):
         super().__init__()
+        self.endpoint = endpoint
         self.reset()
 
 

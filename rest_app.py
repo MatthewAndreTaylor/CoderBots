@@ -35,6 +35,9 @@ player_body.CreateFixture(
 velocity = (0, 0)
 move_speed_px = 240
 
+@app.route("/")
+def index():
+    return "CoderBot API"
 
 @app.route("/robot_scenario_env")
 def render_robot_scenario():
