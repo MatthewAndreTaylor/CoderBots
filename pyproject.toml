@@ -6,27 +6,7 @@ authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},
 ]
 
-[tool.coderbots]
-contributors = [
-  { name = "Matthew Taylor" },
-  { name = "Terry Liu" }
-]
-
 dependencies = [
-    "box2d",
     "anywidget"
 ]
 
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["coderbot_package*"]
-
-[tool.setuptools.package-data]
-coderbot_package = ["*.js", "assets/*", "maps/*.json"]
