@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html,body{height:100%;margin:0}
+    #wrap{display:flex;flex-direction:column;height:100%}
+    #canvasHolder{flex:1;display:flex;align-items:center;justify-content:center;background:#111}
+    canvas{border:1px solid #333;background:#0b1220}
+
+    #ui {
+      padding: 12px 0;
+      background: #0f1724;
+      color: #e6eef8;
+      font-family: system-ui, Arial, Helvetica, sans-serif;
+      border-bottom: 1px solid #1e2a3a;
+    }
+
+    #info {
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    #info strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .hint {
+      opacity: 0.85;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.95em;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      accent-color: #f0c808;
+      height: 4px;
+      width: 130px;
+      cursor: pointer;
+    }
+
+    button {
+      background: #f0c808;
+      border: none;
+      color: #111;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffdb4d;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="ui">
+      <div id="info">
+        <div>
+          <strong>Autonomous Mobile Robotics Simulation</strong>
+          <span class="hint">Controls: <b>W</b> = forward, <b>S</b> = reverse, <b>A</b> = rotate left, <b>D</b> = rotate right</span>
+        </div>
+        <div class="controls">
+          <label>Thrust <input id="thrust" type="range" min="0" max="0.1" step="0.001" value="0.01"></label>
+          <label>Turn <input id="turn" type="range" min="0" max="0.15" step="0.001" value="0.03"></label>
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div id="canvasHolder"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script>
+  (function(){
+    const { Engine, Render, Runner, World, Bodies, Body, Events, Composite, Vector } = Matter;
+
+    const width = 800;
+    const height = 600;
+    const engine = Engine.create();
+    engine.gravity.y = 0;
+
+    const render = Render.create({
+      element: document.getElementById('canvasHolder'),
+      engine: engine,
+      options: {
+        width, height,
+        wireframes: false,
+        background: '#0b1220',
+        showAngleIndicator: false
+      }
+    });
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    // Obstacles
+    const obstacles = [];
+    for (let i=0;i<6;i++){
+      const w = 60 + Math.random()*120;
+      const h = 40 + Math.random()*100;
+      const x = 120 + Math.random()*(width-240);
+      const y = 120 + Math.random()*(height-240);
+      const rect = Bodies.rectangle(x,y,w,h,{isStatic:true, angle: Math.random()*Math.PI, render:{fillStyle:'#2f6f8f'}});
+      obstacles.push(rect);
+    }
+    World.add(engine.world, obstacles);
+
+    // Robot body (a rectangle with a triangle indicator for heading)
+    const robotWidth = 54;
+    const robotHeight = 44;
+    const robot = Bodies.rectangle(200, 200, robotWidth, robotHeight, {
+      frictionAir: 0.12, // top-down drag
+      friction: 0,
+      restitution: 0.1,
+      inertia: Infinity, // prevent rotation from collisions easily — we'll control rotation manually
+      render: {
+        fillStyle: '#f0c808'
+      }
+    });
+
+     // Pushable boxes (dynamic)
+    const pushables = [];
+    for (let i = 0; i < 3; i++) {
+      const size = 40 + Math.random()*20;
+      const x = 100 + Math.random()*(width - 200);
+      const y = 100 + Math.random()*(height - 200);
+      const box = Bodies.rectangle(x, y, size, size, {
+        frictionAir: 0.1,
+        friction: 0.5,
+        restitution: 0.2,
+        density: 0.002,
+        render: {
+          fillStyle: '#b2df8a'
+        }
+      });
+      pushables.push(box);
+    }
+    World.add(engine.world, pushables);
+
+    // Add a small sensor for front (for visuals) as compound render only: we'll use a separate body for the triangle
+    const headingIndicator = Bodies.polygon(
+        robot.position.x + 30,
+        robot.position.y,
+        3,
+        25,
+        {
+            isSensor: true,
+            render: {
+                fillStyle: 'rgba(209,73,91,0.75)',
+                strokeStyle: 'rgba(209,73,91,0.9)',
+                lineWidth: 1
+            }
+        }
+    );
+    headingIndicator.isStatic = true; // will be positioned manually for visuals
+
+    World.add(engine.world, [robot, headingIndicator]);
+
+    // Keep headingIndicator positioned relative to robot for visuals
+    Events.on(engine, 'beforeUpdate', ()=>{
+      Body.setPosition(headingIndicator, {
+        x: robot.position.x + Math.cos(robot.angle) * (robotWidth/2 + 6),
+        y: robot.position.y + Math.sin(robot.angle) * (robotWidth/2 + 6)
+      });
+      Body.setAngle(headingIndicator, robot.angle);
+    });
+
+    const keys = { up:false, down:false, left:false, right:false };
+    const thrustInput = document.getElementById('thrust');
+    const turnInput = document.getElementById('turn');
+
+    function applyControls(){
+      const thrust = parseFloat(thrustInput.value); // force magnitude
+      const turn = parseFloat(turnInput.value); // angular velocity
+
+      // Forward/back thrust: apply force at robot center in direction of heading
+      if (keys.up){
+        const force = { x: Math.cos(robot.angle) * thrust, y: Math.sin(robot.angle) * thrust };
+        Body.applyForce(robot, robot.position, force);
+      }
+      if (keys.down){
+        const force = { x: -Math.cos(robot.angle) * thrust*0.6, y: -Math.sin(robot.angle) * thrust*0.6 };
+        Body.applyForce(robot, robot.position, force);
+      }
+
+      // Rotation by setting small angular velocity manually
+      if (keys.left && !keys.right){
+        Body.setAngularVelocity(robot, -turn);
+      } else if (keys.right && !keys.left){
+        Body.setAngularVelocity(robot, turn);
+      } else {
+        // damp rotation slowly
+        Body.setAngularVelocity(robot, robot.angularVelocity * 0.9);
+      }
+
+      // optional: clamp speed
+      const maxSpeed = 8;
+      const v = robot.velocity;
+      const speed = Math.sqrt(v.x*v.x + v.y*v.y);
+      if (speed > maxSpeed){
+        Body.setVelocity(robot, { x: v.x * maxSpeed / speed, y: v.y * maxSpeed / speed });
+      }
+    }
+
+    Events.on(engine, 'afterUpdate', ()=> applyControls());
+    // Keyboard listeners
+    window.addEventListener('keydown', (e)=>{
+      if (e.repeat) return;
+      switch(e.code){
+        case 'KeyW': keys.up = true; break;
+        case 'KeyS': keys.down = true; break;
+        case 'KeyA': keys.left = true; break;
+        case 'KeyD': keys.right = true; break;
+      }
+    });
+    window.addEventListener('keyup', (e)=>{
+      switch(e.code){
+        case 'KeyW': keys.up = false; break;
+        case 'KeyS': keys.down = false; break;
+        case 'KeyA': keys.left = false; break;
+        case 'KeyD': keys.right = false; break;
+      }
+    });
+
+    document.getElementById('reset').addEventListener('click', ()=>{
+      Body.setPosition(robot, {x:200, y:200});
+      Body.setAngle(robot, 0);
+      Body.setVelocity(robot, {x:0,y:0});
+      Body.setAngularVelocity(robot, 0);
+    });
+
+    Render.lookAt(render, {
+      min: { x: 0, y: 0 },
+      max: { x: width, y: height }
+    });
+
+  })();
+  </script>
+</body>
+</html>
