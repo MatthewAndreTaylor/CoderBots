@@ -13,7 +13,7 @@ Simulation environments should be able to run in any notebook environment and re
 
 Users can setup thier own environments and modify scenarios through a simple json schema.
 
-## Get Strarted 🚀
+## Get Started 🚀
 
 ```bash
 pip install coderbot_sim
