@@ -10,3 +10,16 @@ dependencies = [
     "anywidget"
 ]
 
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["coderbot_sim"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"coderbot_sim" = ["sim.js", "styles.css"]
+
+
+

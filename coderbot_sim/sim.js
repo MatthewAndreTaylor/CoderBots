@@ -1,136 +1,138 @@
 const keys = { forward: false, backward: false, left: false, right: false };
 
-class ray{
-	constructor(start, end){
-		this.start = start;
-		this.end = end;
-	}
-	
-	yValueAt(x){
-		return this.offsetY + this.slope * x; 
-	} 
-	xValueAt(y){
-		return (y - this.offsetY) / this.slope;
-	}
-	
-	pointInBounds(point){
-		var minX = Math.min(this.start.x, this.end.x);
-		var maxX = Math.max(this.start.x, this.end.x);
-		var minY = Math.min(this.start.y, this.end.y);
-		var maxY = Math.max(this.start.y, this.end.y);
-		return (
-			point.x >= minX &&
-			point.x <= maxX &&
-			point.y >= minY &&
-			point.y <= maxY );
-	}
-	
-	get difference(){
-		return this.end.minus(this.start);
-	}
-	get slope(){
-		var dif = this.difference;
-		return dif.y / dif.x;
-	}	
-	get offsetY(){
-		return this.start.y - this.slope * this.start.x;
-	}
-	get isHorizontal(){ return compareNum(this.start.y, this.end.y); }
-	get isVertical(){ return compareNum(this.start.x, this.end.x); }
-	
-	static intersect(rayA, rayB){
-		if(rayA.isVertical && rayB.isVertical) return null;
-		if(rayA.isVertical) return new vec2(rayA.start.x, rayB.yValueAt(rayA.start.x));
-		if(rayB.isVertical) return new vec2(rayB.start.x, rayA.yValueAt(rayB.start.x));
-		if(compareNum(rayA.slope, rayB.slope)) return null;
-		if(rayA.isHorizontal) return new vec2(rayB.xValueAt(rayA.start.y), rayA.start.y);
-		if(rayB.isHorizontal) return new vec2(rayA.xValueAt(rayB.start.y), rayB.start.y);
-		var x = (rayB.offsetY - rayA.offsetY) / (rayA.slope - rayB.slope)
-		return new vec2(x, rayA.yValueAt(x));
-	}
-	static collisionPoint(rayA, rayB){
-		var intersection = ray.intersect(rayA, rayB);
-		if(!intersection) return null;
-		if(!rayA.pointInBounds(intersection)) return null;
-		if(!rayB.pointInBounds(intersection)) return null;
-		return intersection;
-	}
-	static bodyEdges(body){
-		var r = [];
-		for (var i = body.parts.length - 1; i >= 0; i--){
-			for(var k = body.parts[i].vertices.length - 1; k >= 0; k--){
-				var k2 = k + 1;
-				if(k2 >= body.parts[i].vertices.length)
-					k2 = 0;
-				var tray = new ray(
-					vec2.fromOther(body.parts[i].vertices[k]) , 
-					vec2.fromOther(body.parts[i].vertices[k2]) );
-				tray.verts = [
-					body.parts[i].vertices[k] , 
-					body.parts[i].vertices[k2] ];
-				
-				r.push(tray);
-			}
-		}
-		return r;
-	}
-	static bodyCollisions(rayA, body){
-		const r = [];
-		const edges = ray.bodyEdges(body);
-		for (let i = edges.length - 1; i >= 0; i--) {
-			const colpoint = ray.collisionPoint(rayA, edges[i]);
-			if (!colpoint) continue;
-			r.push({ body: body, point: colpoint });
-		}
-		
-		return r;
-	}
+class ray {
+  constructor(start, end) {
+    this.start = start;
+    this.end = end;
+  }
+
+  yValueAt(x) {
+    return this.offsetY + this.slope * x;
+  }
+  xValueAt(y) {
+    return (y - this.offsetY) / this.slope;
+  }
+
+  pointInBounds(point) {
+    var minX = Math.min(this.start.x, this.end.x);
+    var maxX = Math.max(this.start.x, this.end.x);
+    var minY = Math.min(this.start.y, this.end.y);
+    var maxY = Math.max(this.start.y, this.end.y);
+    return (
+      point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY
+    );
+  }
+
+  get difference() {
+    return this.end.minus(this.start);
+  }
+  get slope() {
+    var dif = this.difference;
+    return dif.y / dif.x;
+  }
+  get offsetY() {
+    return this.start.y - this.slope * this.start.x;
+  }
+  get isHorizontal() {
+    return compareNum(this.start.y, this.end.y);
+  }
+  get isVertical() {
+    return compareNum(this.start.x, this.end.x);
+  }
+
+  static intersect(rayA, rayB) {
+    if (rayA.isVertical && rayB.isVertical) return null;
+    if (rayA.isVertical)
+      return new vec2(rayA.start.x, rayB.yValueAt(rayA.start.x));
+    if (rayB.isVertical)
+      return new vec2(rayB.start.x, rayA.yValueAt(rayB.start.x));
+    if (compareNum(rayA.slope, rayB.slope)) return null;
+    if (rayA.isHorizontal)
+      return new vec2(rayB.xValueAt(rayA.start.y), rayA.start.y);
+    if (rayB.isHorizontal)
+      return new vec2(rayA.xValueAt(rayB.start.y), rayB.start.y);
+    var x = (rayB.offsetY - rayA.offsetY) / (rayA.slope - rayB.slope);
+    return new vec2(x, rayA.yValueAt(x));
+  }
+  static collisionPoint(rayA, rayB) {
+    var intersection = ray.intersect(rayA, rayB);
+    if (!intersection) return null;
+    if (!rayA.pointInBounds(intersection)) return null;
+    if (!rayB.pointInBounds(intersection)) return null;
+    return intersection;
+  }
+  static bodyEdges(body) {
+    var r = [];
+    for (var i = body.parts.length - 1; i >= 0; i--) {
+      for (var k = body.parts[i].vertices.length - 1; k >= 0; k--) {
+        var k2 = k + 1;
+        if (k2 >= body.parts[i].vertices.length) k2 = 0;
+        var tray = new ray(
+          vec2.fromOther(body.parts[i].vertices[k]),
+          vec2.fromOther(body.parts[i].vertices[k2])
+        );
+        tray.verts = [body.parts[i].vertices[k], body.parts[i].vertices[k2]];
+
+        r.push(tray);
+      }
+    }
+    return r;
+  }
+  static bodyCollisions(rayA, body) {
+    const r = [];
+    const edges = ray.bodyEdges(body);
+    for (let i = edges.length - 1; i >= 0; i--) {
+      const colpoint = ray.collisionPoint(rayA, edges[i]);
+      if (!colpoint) continue;
+      r.push({ body: body, point: colpoint });
+    }
+
+    return r;
+  }
 }
 
-function compareNum(a, b, eps = 0.00001){
-	return Math.abs(b - a) <= eps;
+function compareNum(a, b, eps = 0.00001) {
+  return Math.abs(b - a) <= eps;
 }
 
-class vec2{
-    constructor(x = 0, y = x){
-        this.x = x;
-        this.y = y;
-    }
-    normalized(magnitude = 1){
-        return this.multiply(magnitude / this.distance());
-    }
-    multiply(factor){
-        return new vec2(this.x * factor, this.y * factor);
-    }
-    plus(vec){
-        return new vec2(this.x + vec.x, this.y + vec.y);
-    }
-    minus(vec){
-        return this.plus(vec.multiply(-1));
-    }
-    rotate(rot){
-        var ang = this.direction;
-        var mag = this.distance();
-        ang += rot;
-        return vec2.fromAng(ang, mag)
-    }  
-    get direction(){
-        return Math.atan2(this.y, this.x);
-    }
-    distance(vec = new vec2()){
-        var d = Math.sqrt(
-            Math.pow(this.x - vec.x, 2) +
-            Math.pow(this.y - vec.y, 2));
-        return d;
-    }
-    static fromAng(angle, magnitude = 1){
-        return new vec2(
-            Math.cos(angle) * magnitude,
-            Math.sin(angle) * magnitude);
-    }
-    static fromOther(vector){
-        return new vec2(vector.x, vector.y);
-    }
+class vec2 {
+  constructor(x = 0, y = x) {
+    this.x = x;
+    this.y = y;
+  }
+  normalized(magnitude = 1) {
+    return this.multiply(magnitude / this.distance());
+  }
+  multiply(factor) {
+    return new vec2(this.x * factor, this.y * factor);
+  }
+  plus(vec) {
+    return new vec2(this.x + vec.x, this.y + vec.y);
+  }
+  minus(vec) {
+    return this.plus(vec.multiply(-1));
+  }
+  rotate(rot) {
+    var ang = this.direction;
+    var mag = this.distance();
+    ang += rot;
+    return vec2.fromAng(ang, mag);
+  }
+  get direction() {
+    return Math.atan2(this.y, this.x);
+  }
+  distance(vec = new vec2()) {
+    var d = Math.sqrt(
+      Math.pow(this.x - vec.x, 2) + Math.pow(this.y - vec.y, 2)
+    );
+    return d;
+  }
+  static fromAng(angle, magnitude = 1) {
+    return new vec2(Math.cos(angle) * magnitude, Math.sin(angle) * magnitude);
+  }
+  static fromOther(vector) {
+    return new vec2(vector.x, vector.y);
+  }
 }
 
 export default {
@@ -161,7 +163,7 @@ export default {
       Events,
       Query,
       Vector,
-      Composite
+      Composite,
     } = Matter;
 
     const width = 800;
@@ -169,7 +171,6 @@ export default {
     const engine = Engine.create();
     engine.gravity.y = 0;
 
-    // Container setup
     const container = document.createElement("div");
     container.className = "sim-container";
     el.appendChild(container);
@@ -197,57 +198,76 @@ export default {
       map: [],
       robot: { pos: [200, 200], angle: 0, speed: 0.01, turn_speed: 0.03 },
     };
+    
 
-    const bodies = [];
-    mapData.map.forEach((item) => {
-      if (item.type === "rectangle") {
-        item.bodyInfo.isStatic = item.bodyInfo.isStatic ?? true;
-        const rect = Bodies.rectangle(
-          item.x,
-          item.y,
-          item.width,
-          item.height,
-          item.bodyInfo
-        );
-        bodies.push(rect);
+    model.on("change:reset_state", () => {
+      if (model.get("reset_state")) {
+        World.clear(engine.world);
+        Engine.clear(engine);
+
+        buildWorld();
+
+        model.set("reset_state", false);
       }
     });
-    World.add(engine.world, bodies);
 
+    let robot;
+    let headingIndicator;
     const robotWidth = 54;
     const robotHeight = 44;
-    const robot = Bodies.rectangle(
-      mapData.robot.pos[0],
-      mapData.robot.pos[1],
-      robotWidth,
-      robotHeight,
-      {
-        frictionAir: 0.12,
-        friction: 0,
-        restitution: 0.1,
-        inertia: Infinity,
-        angle: mapData.robot.angle,
-        render: { fillStyle: "#f0c808" },
-      }
-    );
 
-    // Add sensors
-    const headingIndicator = Bodies.polygon(
-      robot.position.x + 30,
-      robot.position.y,
-      3,
-      16,
-      {
-        isSensor: true,
-        render: {
-          fillStyle: "rgba(209,73,91,0.75)",
-          strokeStyle: "rgba(209,73,91,0.9)",
-          lineWidth: 1,
-        },
-      }
-    );
-    headingIndicator.isStatic = true;
-    World.add(engine.world, [robot, headingIndicator]);
+    function buildWorld() {
+      const bodies = [];
+      mapData.map.forEach((item) => {
+        if (item.type === "rectangle") {
+          item.bodyInfo.isStatic = item.bodyInfo.isStatic ?? true;
+          const rect = Bodies.rectangle(
+            item.x,
+            item.y,
+            item.width,
+            item.height,
+            item.bodyInfo
+          );
+          bodies.push(rect);
+        }
+      });
+      World.add(engine.world, bodies);
+
+      robot = Bodies.rectangle(
+        mapData.robot.pos[0],
+        mapData.robot.pos[1],
+        robotWidth,
+        robotHeight,
+        {
+          frictionAir: 0.12,
+          friction: 0,
+          restitution: 0.1,
+          inertia: Infinity,
+          angle: mapData.robot.angle,
+          render: { fillStyle: "#f0c808" },
+        }
+      );
+
+      // Add heading
+      headingIndicator = Bodies.polygon(
+        robot.position.x + 30,
+        robot.position.y,
+        3,
+        16,
+        {
+          isSensor: true,
+          render: {
+            fillStyle: "rgba(209,73,91,0.75)",
+            strokeStyle: "rgba(209,73,91,0.9)",
+            lineWidth: 1,
+          },
+        }
+      );
+      headingIndicator.isStatic = true;
+      World.add(engine.world, [robot, headingIndicator]);
+    }
+
+    buildWorld();
 
     Events.on(engine, "beforeUpdate", () => {
       Body.setPosition(headingIndicator, {
@@ -314,15 +334,7 @@ export default {
       }
     }
 
-    function lidarScan(
-      engine,
-      origin,
-      yaw = 0,
-      numBeams = 360,
-      fov = 2 * Math.PI,
-      maxRange = 1000
-    ) {
-
+    function lidarScan(engine, origin, yaw, numBeams, fov, maxRange) {
       const allBodies = Composite.allBodies(engine.world);
       const bodies = allBodies.filter(
         (b) => b !== robot && b !== headingIndicator
@@ -344,72 +356,68 @@ export default {
 
         start = vec2.fromOther(start);
         end = vec2.fromOther(end);
-        var query = Matter.Query.ray(bodies, start, end);
+        var query = Query.ray(bodies, start, end);
         var cols = [];
 
-
         var raytest = new ray(start, end);
-        for(let i = query.length - 1; i >= 0; i--){
+        for (let i = query.length - 1; i >= 0; i--) {
           var bcols = ray.bodyCollisions(raytest, query[i].body);
-          for(let k = bcols.length - 1; k >= 0; k--){
+          for (let k = bcols.length - 1; k >= 0; k--) {
             cols.push(bcols[k]);
           }
         }
-        
-        cols.sort(function(a,b){
-            return a.point.distance(start) - b.point.distance(start);
-          });
+
+        cols.sort(function (a, b) {
+          return a.point.distance(start) - b.point.distance(start);
+        });
 
         if (cols.length > 0) {
           hitPoints.push(cols[0].point);
           hitBodies.push(cols[0].body);
           angles.push(angle);
         }
-
       }
 
       return { angles, hitPoints, hitBodies };
     }
 
-    let frameCount = 0;
+    const {
+      numBeams = 30,
+      fov = 2 * Math.PI,
+      maxRange = 1000,
+    } = mapData.robot.lidar ?? {};
 
     Events.on(engine, "afterUpdate", () => {
       applyControls();
 
-      frameCount++;
-      if (frameCount % 20 === 0) { // every 120 frames
-        const origin = robot.position;
-        const yaw = robot.angle;
-        const scan = lidarScan(engine, origin, yaw, 30, Math.PI * 2, 1000);
-        model.set("sensorData", {
-          lidar: {
-            angles: scan.angles,
-            hitPoints: scan.hitPoints,
-            labels: scan.hitBodies.map(body => body.label),
-          },
-        });
-        model.save_changes();
+      const origin = robot.position;
+      const yaw = robot.angle;
+      const scan = lidarScan(engine, origin, yaw, numBeams, fov, maxRange);
+      model.set("sensorData", {
+        lidar: {
+          angles: scan.angles,
+          hitPoints: scan.hitPoints,
+          labels: scan.hitBodies.map((body) => body.label),
+        },
+      });
+      model.save_changes();
+
+      if (model.get("debugDraw")) {
+        const ctx = renderInstance.context;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 0, 0, 1)";
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i < scan.hitPoints.length; i++) {
+          const p = scan.hitPoints[i];
+          ctx.beginPath();
+          ctx.moveTo(origin.x, origin.y);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+
+        ctx.restore();
       }
-
-      // const origin = robot.position;
-      // const yaw = robot.angle;
-      // const scan = lidarScan(engine, origin, yaw, 30, Math.PI * 2, 1000);
-      // const ctx = renderInstance.context;
-      //   ctx.save();
-      //   ctx.strokeStyle = "rgba(255, 0, 0, 1)";
-      //   ctx.lineWidth = 1;
-
-      //   for (let i = 0; i < scan.hitPoints.length; i++) {
-      //     const p = scan.hitPoints[i];
-      //     ctx.beginPath();
-      //     ctx.moveTo(origin.x, origin.y);
-      //     ctx.lineTo(p.x, p.y);
-      //     ctx.stroke();
-      //   }
-
-      //   ctx.restore();
-
-
     });
 
     Render.lookAt(renderInstance, {
