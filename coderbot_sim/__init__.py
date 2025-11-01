@@ -12,10 +12,11 @@ class RobotSim(anywidget.AnyWidget):
     controls = traitlets.Dict().tag(sync=True)
     sensorData = traitlets.Dict().tag(sync=True)
     debugDraw = traitlets.Bool(default_value=False).tag(sync=True)
+    _reset_state = traitlets.Bool(default_value=False).tag(sync=True)
+    _viewport_size = traitlets.Tuple(traitlets.Int(), traitlets.Int(), default_value=(800, 600)).tag(sync=True)
 
-    reset_state = traitlets.Bool(default_value=False).tag(sync=True)
-
-    def __init__(self, env_map, show_controls=False, debugDraw=False):
+    def __init__(self, env_map, show_controls=False, debugDraw=False, viewport_size=(800, 600)):
+        """Initialize the robot simulation."""
         super().__init__()
         self.env_map = env_map
         self.robot_data = self.env_map.get("robot", {"pos": [200, 200], "angle": 0})
@@ -25,6 +26,7 @@ class RobotSim(anywidget.AnyWidget):
         }
         self.show_controls = show_controls
         self.debugDraw = debugDraw
+        self._viewport_size = viewport_size
 
     def sensor(self):
         """Signal to check the robot's sensors."""
@@ -43,5 +45,6 @@ class RobotSim(anywidget.AnyWidget):
         self.move(**stop)
 
     def reset(self):
-        self.reset_state = True
+        """Reset the simulation state."""
+        self._reset_state = True
 
