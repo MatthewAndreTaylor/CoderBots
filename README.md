@@ -1,5 +1,5 @@
 
-# Coder bots
+# coderbot-sim
 
 [![PyPI](https://img.shields.io/pypi/v/coderbot-sim.svg)](https://pypi.org/project/coderbot-sim)
 [![Jupyterlite](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://matthewandretaylor.github.io/CoderBots/lab?path=example.ipynb)
@@ -12,5 +12,11 @@ Additionally they are usually difficult to get setup and may require domain spec
 Simulation environments should be able to run in any notebook environment and require fewer dependencies.
 
 Users can setup thier own environments and modify scenarios through a simple json schema.
+
+## Get Strarted 🚀
+
+```bash
+pip install coderbot_sim
+```
 
 
