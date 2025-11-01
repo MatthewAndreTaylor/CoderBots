@@ -23,11 +23,8 @@ class ray {
     );
   }
 
-  get difference() {
-    return this.end.minus(this.start);
-  }
   get slope() {
-    var dif = this.difference;
+    var dif = this.end.minus(this.start);
     return dif.y / dif.x;
   }
   get offsetY() {
@@ -166,8 +163,9 @@ export default {
       Composite,
     } = Matter;
 
-    const width = 800;
-    const height = 600;
+    const dimensions = model.get("_viewport_size") || [800, 600];
+    const width = dimensions[0];
+    const height = dimensions[1];
     const engine = Engine.create();
     engine.gravity.y = 0;
 
@@ -200,14 +198,12 @@ export default {
     };
     
 
-    model.on("change:reset_state", () => {
-      if (model.get("reset_state")) {
+    model.on("change:_reset_state", () => {
+      if (model.get("_reset_state")) {
         World.clear(engine.world);
         Engine.clear(engine);
-
         buildWorld();
-
-        model.set("reset_state", false);
+        model.set("_reset_state", false);
       }
     });
 
