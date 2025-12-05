@@ -1,13 +1,14 @@
 [project]
 name = "coderbot-sim"
-version = "0.0.3"
+version = "0.0.4"
 description = "starting robotics with simple simulation environments"
 authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},
 ]
 
 dependencies = [
-    "anywidget"
+    "anywidget",
+    "jupyter-ui-poll"
 ]
 
 [build-system]
@@ -19,7 +20,7 @@ packages = ["coderbot_sim"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-"coderbot_sim" = ["sim.js", "styles.css"]
+coderbot_sim = ["**/*"]
 
 
 
