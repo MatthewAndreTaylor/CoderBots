@@ -62,19 +62,22 @@ class MountainCarWidget(anywidget.AnyWidget):
     _view_ready = traitlets.Bool(default_value=False).tag(sync=True)
 
     def __init__(self, viewport_size=(600, 400), manual_control=False, sim_env=None):
-        super().__init__()
         self._viewport_size = viewport_size
         self._manual_control = manual_control
+        super().__init__()
         if sim_env is None:
             sim_env = MountainCarEnv()
         self.sim_env = sim_env
 
     def render(self):
         display(self)
-
-        with ui_events() as ui_poll:
-            while not self._view_ready:
-                ui_poll(100)
+        
+        try:
+            with ui_events() as ui_poll:
+                while not self._view_ready:
+                    ui_poll(100)
+        except Exception:
+            pass
 
     async def step(self, action: int, dt: float = 0.01) -> dict:
         sim_state = self.sim_env.step(action)

@@ -1,6 +1,6 @@
 [project]
 name = "coderbot-sim"
-version = "0.0.4"
+version = "0.0.5"
 description = "starting robotics with simple simulation environments"
 authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},
