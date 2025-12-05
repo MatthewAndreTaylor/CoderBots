@@ -52,10 +52,15 @@ class RobotSim(anywidget.AnyWidget):
         self.num_scans += 1
         self.move(**stop)
         
-        async with ui_events() as ui_poll:
-            while self.sensorData.get("scanId", 0) < self.num_scans:
-                # print(self.sensorData)
-                await ui_poll(100)
+        try:
+            # https://github.com/Kirill888/jupyter-ui-poll/issues/23
+            # polling simulation state updates from the widget may not be supported by all jupyter kernels
+            async with ui_events() as ui_poll:
+                while self.sensorData.get("scanId", 0) < self.num_scans:
+                    # print(self.sensorData)
+                    await ui_poll(100)
+        except Exception:
+            pass
         
         return self.sensorData
 

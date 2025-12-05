@@ -208,7 +208,7 @@ class FroggerTkFrontend:
         self._root.after(15, self._pump)
 
     async def step(self, action, dt=0.01):
-        state = self.sim_env.step(action)
+        state = self.sim_env.step(action, dt=dt)
         self._last_state = state
 
         if self._root:

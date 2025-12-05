@@ -21,7 +21,6 @@ export default {
     let velocity = sim_state.velocity || 0.0;
 
     if (model.get("_manual_control")) {
-      console.log("manual control enabled");
       const controls = document.createElement("div");
       controls.className = "controls";
       controls.innerHTML = `
