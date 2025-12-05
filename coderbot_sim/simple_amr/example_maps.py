@@ -4,7 +4,10 @@ import copy
 
 empty_map = {
     "name": "rect_triangle_map",
-    "robot": {"pos": [500, 300], "angle": 0}, # speed: 0.01, turn_speed: 0.04, lidar: { numBeams: 30, fov: 6.28, maxRange: 1000}
+    "robot": {
+        "pos": [500, 300],
+        "angle": 0,
+    },  # speed: 0.01, turn_speed: 0.04, lidar: { numBeams: 30, fov: 6.28, maxRange: 1000}
     "map": [
         {
             "type": "rectangle",
@@ -94,7 +97,6 @@ def gen_simple_map():
             },
         }
         map_data["map"].append(box)
-
 
     for i in range(2):
         size = 40 + random.random() * 20
