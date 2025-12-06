@@ -47,7 +47,15 @@ export default {
         }
       });
 
+      let lastTime = new Date();
       const step = () => {
+        let ms = new Date();
+        if (ms - lastTime < 20) { 
+          requestAnimationFrame(step);
+          return;
+        }
+        lastTime = ms;
+
         const action = controlsObj.action; // 0=left, 1=idle, 2=right
         const forceTerm = (action - 1) * force;
         velocity += forceTerm + Math.cos(3 * position) * -gravity;
@@ -55,7 +63,6 @@ export default {
         position += velocity;
         position = Math.max(Math.min(position, maxPosition), minPosition);
         if (position === minPosition && velocity < 0) velocity = 0;
-
         requestAnimationFrame(step);
       };
 
@@ -140,7 +147,6 @@ export default {
       ctx.closePath();
       ctx.fill();
 
-      console.log("Drawing frame");
       requestAnimationFrame(draw);
     };
 

@@ -99,6 +99,12 @@ class FroggerEnv:
         self.score = 0.0
         self.crossings = 0
         self.total_height = ROWS - 1
+        return {
+            "frog_pos": (self.frog.col, self.frog.row),
+            "grid": build_car_grid(self.lanes),
+            "done": False,
+            "score": self.score,
+        }
 
     def _update_score(self):
         """Compute fractional score: crossings + (current height / total height)."""
