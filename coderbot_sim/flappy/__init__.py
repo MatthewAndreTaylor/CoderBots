@@ -17,13 +17,12 @@ BIRD_SIZE = 35
 def getRandomPipe():
     """Return a new pipe pair (upper, lower)."""
     gapY = random.randint(120, HEIGHT - 120 - PIPE_GAP)
-    pipeX = WIDTH + 10
+    pipeX = WIDTH
 
     return [
         {"x": pipeX, "y": gapY - PIPE_HEIGHT},
         {"x": pipeX, "y": gapY + PIPE_GAP},
     ]
-
 
 
 def rects_overlap(a, b):
@@ -43,7 +42,7 @@ class FlappyEnv:
         self.score = 0
         self.done = False
         self.pipes = []
-        self.time_since_pipe = 0
+        self.time_since_pipe = PIPE_INTERVAL
 
         return self._get_state()
 
@@ -59,7 +58,7 @@ class FlappyEnv:
         ]
 
     def _step_physics(self, action, dt):
-        # action: 0 = do nothing, 1 = flap
+        # action: 0 = wait, 1 = flap
         if action == 1:
             self.bird_vel = FLAP_STRENGTH
 

@@ -4,7 +4,7 @@ import threading
 try:
     import tkinter as tk
 except ImportError:
-    raise ImportError("tkinter is required for FlappyBirdTkFrontend")
+    raise ImportError("tkinter is required for FlappyTkFrontend")
 
 from . import FlappyEnv, WIDTH, HEIGHT, PIPE_WIDTH, PIPE_HEIGHT, BIRD_SIZE, BIRD_X
 
@@ -21,7 +21,6 @@ class FlappyTkFrontend:
         self._canvas = None
         self._thread = None
         self._last_state = None
-
 
     def render(self):
         if self._thread is not None:
@@ -95,15 +94,19 @@ class FlappyTkFrontend:
         canvas = self._canvas
         canvas.delete("all")
         canvas.create_rectangle(0, 0, WIDTH, HEIGHT, fill="#70C5CE", outline="")
-        canvas.create_rectangle(0, HEIGHT - 80, WIDTH, HEIGHT, fill="#DED895", outline="")
+        canvas.create_rectangle(
+            0, HEIGHT - 80, WIDTH, HEIGHT, fill="#DED895", outline=""
+        )
 
         # bird
         by = state["bird_y"]
         canvas.create_oval(
-            BIRD_X, by,
-            BIRD_X + BIRD_SIZE, by + BIRD_SIZE,
+            BIRD_X,
+            by,
+            BIRD_X + BIRD_SIZE,
+            by + BIRD_SIZE,
             fill="#FFD700",
-            outline="#000"
+            outline="#000",
         )
 
         # pipes
@@ -118,25 +121,29 @@ class FlappyTkFrontend:
 
             # upper pipe
             canvas.create_rectangle(
-                ux, uy,
-                ux + PIPE_WIDTH, uy + PIPE_HEIGHT,
+                ux,
+                uy,
+                ux + PIPE_WIDTH,
+                uy + PIPE_HEIGHT,
                 fill="#7EC850",
-                outline="#4a8d34"
+                outline="#4a8d34",
             )
 
             # lower pipe
             canvas.create_rectangle(
-                lx, ly,
-                lx + PIPE_WIDTH, ly + PIPE_HEIGHT,
+                lx,
+                ly,
+                lx + PIPE_WIDTH,
+                ly + PIPE_HEIGHT,
                 fill="#7EC850",
-                outline="#4a8d34"
+                outline="#4a8d34",
             )
 
         # score
         canvas.create_text(
-            WIDTH // 2, 30,
+            WIDTH // 2,
+            30,
             text=f"{state['score']}",
             fill="white",
-            font=("Arial", 32, "bold")
+            font=("Arial", 32, "bold"),
         )
-

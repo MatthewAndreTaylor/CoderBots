@@ -26,6 +26,7 @@ class MountainCarWidget(anywidget.AnyWidget):
         if sim_env is None:
             sim_env = MountainCarEnv()
         self.sim_env = sim_env
+        self.sim_state = self.sim_env.reset()
 
     def render(self):
         display(self)
