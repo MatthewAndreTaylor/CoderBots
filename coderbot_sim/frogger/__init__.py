@@ -75,8 +75,6 @@ def build_car_grid(cars_by_lane):
             # Car bounding box
             x0 = car.x
             x1 = car.x + car.width
-
-            # Convert pixel ranges → column indices
             col_start = max(0, int(x0 // CELL))
             col_end = min(COLS - 1, int(x1 // CELL))
 

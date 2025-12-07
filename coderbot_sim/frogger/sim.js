@@ -2,14 +2,12 @@ export default {
   async render({ model, el }) {
     const [width, height] = model.get("_viewport_size") || [800, 600];
 
-    // Container
     const container = document.createElement("div");
     container.style.position = "relative";
     container.style.width = width + "px";
     container.style.height = height + "px";
     el.appendChild(container);
 
-    // Canvas
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -60,19 +58,12 @@ export default {
         ctx.fillRect(0, r * cellH, width, cellH);
       }
 
-      // ------------------------------------------------------------
-      // 🚗 TRUE CAR POSITIONS FROM PYTHON (pixel-space rectangles)
-      // ------------------------------------------------------------
       ctx.fillStyle = "#B43232";
       for (const rect of carRects) {
-        // rect = [x, y, w, h] in SIMULATION ABSOLUTE PIXELS
         const [x, y, w, h] = rect;
         ctx.fillRect(x, y, w, h);
       }
 
-      // ------------------------------------------------------------
-      // 🐸 Frog (grid-based)
-      // ------------------------------------------------------------
       const [frogCol, frogRow] = frogPos;
       const fx = frogCol * cellW;
       const fy = frogRow * cellH;
