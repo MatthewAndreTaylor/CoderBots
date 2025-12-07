@@ -39,7 +39,6 @@ class FlappyEnv:
     def reset(self):
         self.bird_y = HEIGHT // 2
         self.bird_vel = 0
-        self.score = 0
         self.done = False
         self.pipes = []
         self.time_since_pipe = PIPE_INTERVAL
@@ -93,23 +92,15 @@ class FlappyEnv:
 
         return False
 
-    def _update_score(self):
-        for pair in self.pipes:
-            pipe_center_x = pair[0]["x"] + PIPE_WIDTH / 2
-            if "scored" not in pair and pipe_center_x < BIRD_X:
-                pair.append("scored")
-                self.score += 1
-
     def _get_state(self):
         return {
             "bird_y": self.bird_y,
             "bird_vel": self.bird_vel,
             "pipes": self.pipes,
             "done": self.done,
-            "score": self.score,
         }
 
-    def step(self, action, dt=0.02):
+    def step(self, action, dt=0.1):
         # stop simulation on game over
         if self.done:
             return self._get_state()
@@ -120,5 +111,4 @@ class FlappyEnv:
         if self._check_collisions():
             self.done = True
 
-        self._update_score()
         return self._get_state()

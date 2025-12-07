@@ -38,7 +38,6 @@ export default {
       const state = simState || {};
       const birdY = state.bird_y ?? WORLD_HEIGHT / 2;
       const pipes = state.pipes || [];
-      const score = state.score ?? 0;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -103,14 +102,6 @@ export default {
         ctx.fill();
         ctx.stroke();
       }
-
-      // Score
-      ctx.fillStyle = "#FFFFFF";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      const fontSize = 32 * ((scaleX + scaleY) / 2);
-      ctx.font = `bold ${fontSize}px Arial`;
-      ctx.fillText(String(score), width / 2, 30 * scaleY);
 
       requestAnimationFrame(draw);
     }
