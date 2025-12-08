@@ -24,10 +24,9 @@ class FlappySim(anywidget.AnyWidget):
         self._manual_control = manual_control
         if sim_env is None:
             sim_env = FlappyEnv()
-        
+
         self.sim_env = sim_env
         self.sim_state = self.sim_env.reset()
-
 
     def render(self):
         display(self)
@@ -44,7 +43,7 @@ class FlappySim(anywidget.AnyWidget):
         self.sim_state = state
         await asyncio.sleep(dt)
         return state
-    
+
     async def reset(self):
         state = self.sim_env.reset()
         self.sim_state = state

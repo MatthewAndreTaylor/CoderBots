@@ -17,11 +17,9 @@ BIRD_SIZE = 35
 def getRandomPipe():
     """Return a new pipe pair (upper, lower)."""
     gapY = random.randint(120, HEIGHT - 120 - PIPE_GAP)
-    pipeX = WIDTH
-
     return [
-        {"x": pipeX, "y": gapY - PIPE_HEIGHT},
-        {"x": pipeX, "y": gapY + PIPE_GAP},
+        {"x": WIDTH, "y": gapY - PIPE_HEIGHT},
+        {"x": WIDTH, "y": gapY + PIPE_GAP},
     ]
 
 
@@ -100,7 +98,7 @@ class FlappyEnv:
             "done": self.done,
         }
 
-    def step(self, action, dt=0.1):
+    def step(self, action, dt=0.02):
         # stop simulation on game over
         if self.done:
             return self._get_state()
