@@ -27,6 +27,9 @@ ipysketch_lite/labextension
 _output/
 examples/README.md
 
+# Sample model checkpoints
+*.pth
+
 # Distribution / packaging
 .Python
 build/
