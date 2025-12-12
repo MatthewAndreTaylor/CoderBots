@@ -1,55 +1,80 @@
 import asyncio
 import threading
-
-try:
-    import tkinter as tk
-except ImportError:
-    raise ImportError("tkinter is required for MazeRunnerTkFrontend")
-
-from . import MazeRunnerEnv, WIDTH, HEIGHT, ROWS, COLS, WALL
+import tkinter as tk
+from . import MazeRunnerEnv, TILE_SIZE, WALL, EMPTY
 
 
 class MazeRunnerTkFrontend:
-    def __init__(self, viewport_size=(800, 600), sim_env=None):
-        if sim_env is None:
-            sim_env = MazeRunnerEnv()
+    """
+    Tkinter frontend for MazeRunner.
+    Matches style of FlappyTkFrontend / FroggerTkFrontend.
+    """
 
-        self.sim_env = sim_env
-        self._viewport_size = viewport_size
+    def __init__(self, viewport_size=None, sim_env=None):
+        self.sim_env = sim_env or MazeRunnerEnv()
+        self.sim_env.reset()
+
+        self.rows = self.sim_env.rows
+        self.cols = self.sim_env.cols
+        self.cell_size = TILE_SIZE
+
+        w = self.cols * self.cell_size
+        h = self.rows * self.cell_size
+        self.viewport_size = (w, h)
+
         self._root = None
         self._canvas = None
         self._thread = None
-        self._last_state = None
+
 
     def render(self):
-        if self._thread is not None:
+        """Create Tk window in a background thread."""
+        if self._thread:
             return
         self._thread = threading.Thread(target=self._create_window, daemon=True)
         self._thread.start()
 
-    def bring_to_front(self, root):
-        root.lift()
-        root.attributes("-topmost", True)
-        root.after_idle(root.attributes, "-topmost", False)
-        root.focus_force()
 
     def _create_window(self):
-        w, h = self._viewport_size
+        """Builds the Tk window."""
+        w, h = self.viewport_size
 
         root = tk.Tk()
         root.title("MazeRunner")
         root.protocol("WM_DELETE_WINDOW", self._on_close)
-        canvas = tk.Canvas(root, width=w, height=h, bg="#111827")
+
+        canvas = tk.Canvas(root, width=w, height=h, bg="#0d1117")
         canvas.pack(fill="both", expand=True)
+
         self._root = root
         self._canvas = canvas
-        self.bring_to_front(root)
-        self._draw_state(self.sim_env._get_state())
 
+        # Initial draw
+        self._draw_state()
+
+        # Start update loop
         self._pump()
+
         root.mainloop()
 
+
+    def _pump(self):
+        """Keeps the Tk window alive and refreshing."""
+        if not self._root:
+            return
+
+        try:
+            self._root.update_idletasks()
+            self._root.update()
+        except tk.TclError:
+            return
+
+        # Schedule next update
+        self._root.after(30, self._pump)
+
+
     def _on_close(self):
+        """Handle window close."""
         if self._root:
             try:
                 self._root.destroy()
@@ -58,97 +83,54 @@ class MazeRunnerTkFrontend:
         self._root = None
         self._canvas = None
 
-    def _pump(self):
-        if not self._root:
-            return
-        try:
-            self._root.update_idletasks()
-            self._root.update()
-        except tk.TclError:
-            return
-
-        self._root.after(20, self._pump)
 
     async def step(self, action, dt=0.02):
-        state = self.sim_env.step(action, dt=dt)
-        self._last_state = state
-
-        if self._root:
-            self._root.after(0, lambda: self._draw_state(state))
-
+        """Async step, same as anywidget version."""
+        state = self.sim_env.step(action)
+        if self._canvas:
+            self._root.after(0, self._draw_state)
         await asyncio.sleep(dt)
         return state
 
     async def reset(self):
         state = self.sim_env.reset()
-        if self._root:
-            self._draw_state(state)
+        if self._canvas:
+            self._draw_state()
         return state
 
-    def _draw_state(self, state):
+
+    def _draw_state(self):
+        """Draw maze + agent + goal."""
         if not self._canvas:
             return
 
         canvas = self._canvas
         canvas.delete("all")
+        maze = self.sim_env.maze
 
-        w = int(canvas.winfo_width())
-        h = int(canvas.winfo_height())
+        # Draw maze grid
+        for r in range(self.rows):
+            for c in range(self.cols):
+                x1 = c * self.cell_size
+                y1 = r * self.cell_size
+                x2 = x1 + self.cell_size
+                y2 = y1 + self.cell_size
+                color = "#161b22" if maze[r][c] == WALL else "#21262d"
+                canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="")
 
-        rows = state["rows"]
-        cols = state["cols"]
-        maze = state["maze"]
-        agent = state["agent"]
-        goal = state["goal"]
+        # Draw agent
+        agent = self.sim_env.agent_r, self.sim_env.agent_c
+        r, c = agent
+        ax1 = c * self.cell_size + self.cell_size // 4
+        ay1 = r * self.cell_size + self.cell_size // 4
+        ax2 = ax1 + self.cell_size // 2
+        ay2 = ay1 + self.cell_size // 2
+        canvas.create_oval(ax1, ay1, ax2, ay2, fill="yellow", outline="")
 
-        cell_w = w / cols
-        cell_h = h / rows
-
-        # Background
-        canvas.create_rectangle(0, 0, w, h, fill="#111827", outline="")
-
-        # Walls
-        for r in range(rows):
-            for c in range(cols):
-                if maze[r][c] == WALL:
-                    x0 = c * cell_w
-                    y0 = r * cell_h
-                    x1 = x0 + cell_w
-                    y1 = y0 + cell_h
-                    canvas.create_rectangle(
-                        x0, y0, x1, y1, fill="#4B5563", outline="#1F2933"
-                    )
-
-        # Goal
-        gx = goal["c"] * cell_w
-        gy = goal["r"] * cell_h
-        canvas.create_rectangle(
-            gx + cell_w * 0.15,
-            gy + cell_h * 0.15,
-            gx + cell_w * 0.85,
-            gy + cell_h * 0.85,
-            fill="#22C55E",
-            outline="",
-        )
-
-        # Agent
-        ax = agent["c"] * cell_w
-        ay = agent["r"] * cell_h
-        canvas.create_oval(
-            ax + cell_w * 0.2,
-            ay + cell_h * 0.2,
-            ax + cell_w * 0.8,
-            ay + cell_h * 0.8,
-            fill="#FACC15",
-            outline="#000000",
-        )
-
-        # Steps text
-        canvas.create_text(
-            10,
-            10,
-            text=f"Steps: {state['steps']}",
-            anchor="nw",
-            fill="white",
-            font=("Arial", 14, "bold"),
-        )
+        # Draw goal
+        gr, gc = self.sim_env.goal_r, self.sim_env.goal_c
+        gx1 = gc * self.cell_size + self.cell_size // 4
+        gy1 = gr * self.cell_size + self.cell_size // 4
+        gx2 = gx1 + self.cell_size // 2
+        gy2 = gy1 + self.cell_size // 2
+        canvas.create_oval(gx1, gy1, gx2, gy2, fill="red", outline="")
