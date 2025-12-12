@@ -138,12 +138,3 @@ class FlappyTkFrontend:
                 fill="#7EC850",
                 outline="#4a8d34",
             )
-
-        # score
-        canvas.create_text(
-            WIDTH // 2,
-            30,
-            text=f"{state['score']}",
-            fill="white",
-            font=("Arial", 32, "bold"),
-        )

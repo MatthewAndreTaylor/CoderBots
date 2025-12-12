@@ -30,8 +30,7 @@ def _add_outer_walls(maze):
 
 
 def _recursive_divide(maze, top, left, bottom, right):
-    """Recursive division maze generation.
-    """
+    """Recursive division maze generation."""
     width = right - left
     height = bottom - top
 
@@ -107,11 +106,7 @@ class MazeRunnerEnv:
         return self._get_state()
 
     def _valid(self, r, c):
-        return (
-            0 <= r < self.rows
-            and 0 <= c < self.cols
-            and self.maze[r][c] != WALL
-        )
+        return 0 <= r < self.rows and 0 <= c < self.cols and self.maze[r][c] != WALL
 
     def _get_state(self):
         return {
@@ -124,17 +119,15 @@ class MazeRunnerEnv:
             "cols": self.cols,
         }
 
-    def step(self, action, dt=0.02):
-        """Move one step in the maze. 
-        dt is ignored but kept for API symmetry.
-        """
+    def step(self, action):
+        """Move one step in the maze."""
         if self.done:
             return self._get_state()
 
         drc = {
             0: (-1, 0),  # up
-            1: (0, 1),   # right
-            2: (1, 0),   # down
+            1: (0, 1),  # right
+            2: (1, 0),  # down
             3: (0, -1),  # left
         }
 
