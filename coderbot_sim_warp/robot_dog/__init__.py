@@ -37,7 +37,7 @@ class Example:
             articulation_builder,
             xform=xform,
             floating=True,
-            density=1000,
+            density=900,
             armature=0.01,
             stiffness=200,
             damping=1,
