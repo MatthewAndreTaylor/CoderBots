@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class SimEnvironment(ABC):
     @abstractmethod
-    def step(self, action: int) -> dict:
+    def step(self, action) -> dict:
         pass
 
     @abstractmethod
