@@ -24,6 +24,8 @@ class FlappySim(anywidget.AnyWidget):
         self._manual_control = manual_control
         if sim_env is None:
             sim_env = FlappyEnv()
+        if sim_env.num_envs != 1:
+            raise ValueError("FlappySim currently only supports single environment.")
 
         self.sim_env = sim_env
         self.sim_state = self.sim_env.reset()

@@ -59,9 +59,8 @@ export default {
       }
 
       ctx.fillStyle = "#B43232";
-      for (const rect of carRects) {
-        const [x, y, w, h] = rect;
-        ctx.fillRect(x, y, w, h);
+      for (let i = 0; i < carRects.length; i += 4) {
+          ctx.fillRect(carRects[i], carRects[i + 1], carRects[i + 2], carRects[i + 3]);
       }
 
       const [frogCol, frogRow] = frogPos;

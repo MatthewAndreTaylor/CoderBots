@@ -57,10 +57,16 @@ class CartPoleExample:
         )
         self.state = self.model.state()
 
-        wp.sim.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, None, self.state)
+        wp.sim.eval_fk(
+            self.model, self.model.joint_q, self.model.joint_qd, None, self.state
+        )
 
         # CUDA graph
-        self.use_cuda_graph = use_cuda_graph and wp.get_device().is_cuda and wp.is_mempool_enabled(wp.get_device())
+        self.use_cuda_graph = (
+            use_cuda_graph
+            and wp.get_device().is_cuda
+            and wp.is_mempool_enabled(wp.get_device())
+        )
         self.graph = None
         if self.use_cuda_graph:
             with wp.ScopedCapture() as capture:

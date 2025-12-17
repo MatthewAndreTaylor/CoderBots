@@ -27,7 +27,7 @@ export default {
     const BIRD_X = 200;
     const BIRD_SIZE = 35;
     const PIPE_WIDTH = 80;
-    const PIPE_HEIGHT = 320;
+    const PIPE_GAP = 200;
     const GROUND_HEIGHT = 80;
 
     // Scale world to canvas (in case viewport differs from 800×600)
@@ -37,7 +37,9 @@ export default {
     function draw() {
       const state = simState || {};
       const birdY = state.bird_y ?? WORLD_HEIGHT / 2;
-      const pipes = state.pipes || [];
+      const pipes_x = state.pipes_x || [];
+      const pipes_y = state.pipes_y || [];
+      const done = state.done || false;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -58,47 +60,49 @@ export default {
 
       ctx.fillStyle = "#FFD700";
       ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2 * ((scaleX + scaleY) / 2);
+      ctx.lineWidth = 1;
 
-      ctx.beginPath();
-      ctx.ellipse(
-        birdScreenX + birdSizeX / 2,
-        birdScreenY + birdSizeY / 2,
-        birdSizeX / 2,
-        birdSizeY / 2,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      ctx.stroke();
+      if (!done) {
+        ctx.beginPath();
+        ctx.ellipse(
+          birdScreenX + birdSizeX / 2,
+          birdScreenY + birdSizeY / 2,
+          birdSizeX / 2,
+          birdSizeY / 2,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        ctx.stroke();
+      }
 
       // Pipes
-      ctx.fillStyle = "#7EC850";
+      ctx.fillStyle = "#228B22";
       ctx.strokeStyle = "#4a8d34";
       ctx.lineWidth = 2 * ((scaleX + scaleY) / 2);
 
-      for (const pair of pipes) {
-        const upper = pair[0];
-        const lower = pair[1];
-
-        const ux = (upper.x || 0) * scaleX;
-        const uy = (upper.y || 0) * scaleY;
-        const lx = (lower.x || 0) * scaleX;
-        const ly = (lower.y || 0) * scaleY;
+      for (let i = 0; i < pipes_x.length; i++) {
+        const pipeX = pipes_x[i];
+        const pipeY = pipes_y[i];
 
         const pw = PIPE_WIDTH * scaleX;
-        const ph = PIPE_HEIGHT * scaleY;
+        const ux = pipeX * scaleX;
+        const uy = 0; // Upper pipe starts at top of screen
+        const uh = pipeY * scaleY; // Upper pipe height extends down to pipeY
+        const lx = pipeX * scaleX;
+        const ly = (pipeY + PIPE_GAP) * scaleY; // Lower pipe starts after gap
+        const lh = (WORLD_HEIGHT - (pipeY + PIPE_GAP)) * scaleY; // Lower pipe extends to bottom
 
         // Upper pipe
         ctx.beginPath();
-        ctx.rect(ux, uy, pw, ph);
+        ctx.rect(ux, uy, pw, uh);
         ctx.fill();
         ctx.stroke();
 
         // Lower pipe
         ctx.beginPath();
-        ctx.rect(lx, ly, pw, ph);
+        ctx.rect(lx, ly, pw, lh);
         ctx.fill();
         ctx.stroke();
       }

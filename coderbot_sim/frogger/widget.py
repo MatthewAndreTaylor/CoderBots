@@ -2,6 +2,7 @@ import pathlib
 import anywidget
 import traitlets
 import asyncio
+import numpy as np
 from IPython.display import display
 from jupyter_ui_poll import ui_events
 
@@ -19,13 +20,19 @@ class FroggerWidget(anywidget.AnyWidget):
     _view_ready = traitlets.Bool(default_value=False).tag(sync=True)
 
     def get_car_positions(self):
-        return [car.rect for lane in self.sim_env.lanes for car in lane]
+        return np.vstack(self.sim_env.car_rects).flatten().tolist()
 
     def __init__(self, viewport_size=(800, 600), sim_env=None):
         self._viewport_size = viewport_size
         super().__init__()
         if sim_env is None:
             sim_env = FroggerEnv()
+
+        if sim_env.num_envs != 1:
+            raise ValueError(
+                "FroggerWidget currently only supports single environment."
+            )
+
         self.sim_env = sim_env
         self.sim_state = self.sim_env.reset()
         self.car_positions = self.get_car_positions()

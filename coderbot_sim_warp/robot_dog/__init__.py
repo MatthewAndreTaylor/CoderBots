@@ -8,13 +8,6 @@ import warp.examples
 import warp.sim.render
 
 
-def scatter_actions(input, index, src, dim: int = -1):
-    input = input.detach().clone()
-    if src.requires_grad:
-        input.requires_grad_()
-    out = input.scatter(dim, index, src)
-    return out
-
 def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):
     env_offset = np.array(env_offset, dtype=float)
     axis = np.nonzero(env_offset)[0]
@@ -26,11 +19,11 @@ def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):
     return env_offsets
 
 
-class Example:
+class RobotDogExample:
     def __init__(self, use_cuda_graph=False, headless=False, num_envs=8):
         articulation_builder = wp.sim.ModelBuilder()
         rot_x = wp.quat_from_axis_angle(wp.vec3(1.0, 0.0, 0.0), -math.pi * 0.5)
-        rot_y = wp.quat_from_axis_angle(wp.vec3(0.0, 1.0, 0.0),  math.pi * 0.5)
+        rot_y = wp.quat_from_axis_angle(wp.vec3(0.0, 1.0, 0.0), math.pi * 0.5)
         xform = wp.transform(wp.vec3(0.0, 0.65, 0.0), rot_y * rot_x)
         wp.sim.parse_urdf(
             os.path.join(warp.examples.get_asset_directory(), "quadruped.urdf"),
@@ -62,11 +55,14 @@ class Example:
         offsets = compute_env_offsets(self.num_envs)
 
         for i in range(self.num_envs):
-            builder.add_builder(articulation_builder, xform=wp.transform(offsets[i], wp.quat_identity()))
-            builder.joint_q[-12:] = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6]
-            builder.joint_act[-12:] = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6]
-            builder.joint_axis_mode = [wp.sim.JOINT_MODE_TARGET_POSITION] * len(builder.joint_axis_mode)
-
+            builder.add_builder(
+                articulation_builder, xform=wp.transform(offsets[i], wp.quat_identity())
+            )
+            builder.joint_q[-12:] = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6] # fmt: skip
+            builder.joint_act[-12:] = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6] # fmt: skip
+            builder.joint_axis_mode = [wp.sim.JOINT_MODE_TARGET_POSITION] * len(
+                builder.joint_axis_mode
+            )
 
         # finalize model
         self.model = builder.finalize()
@@ -77,39 +73,52 @@ class Example:
         self.fuse_cholesky = False
 
         self.integrator = wp.sim.FeatherstoneIntegrator(
-            self.model, use_tile_gemm=self.use_tile_gemm, fuse_cholesky=self.fuse_cholesky
+            self.model,
+            use_tile_gemm=self.use_tile_gemm,
+            fuse_cholesky=self.fuse_cholesky,
         )
 
-        self.renderer = wp.sim.render.SimRendererOpenGL(self.model, "example", headless=headless)
+        self.renderer = wp.sim.render.SimRendererOpenGL(
+            self.model, "example", headless=headless
+        )
         self.state_0 = self.model.state()
         self.state_1 = self.model.state()
 
-        wp.sim.eval_fk(self.model, self.model.joint_q, self.model.joint_qd, None, self.state_0)
+        wp.sim.eval_fk(
+            self.model, self.model.joint_q, self.model.joint_qd, None, self.state_0
+        )
 
-        self.use_cuda_graph = use_cuda_graph and wp.get_device().is_cuda and wp.is_mempool_enabled(wp.get_device())
+        self.use_cuda_graph = (
+            use_cuda_graph
+            and wp.get_device().is_cuda
+            and wp.is_mempool_enabled(wp.get_device())
+        )
         if self.use_cuda_graph:
             with wp.ScopedCapture() as capture:
                 self.simulate()
             self.graph = capture.graph
 
-
     def simulate(self):
         for _ in range(self.sim_substeps):
             self.state_0.clear_forces()
             wp.sim.collide(self.model, self.state_0)
-            self.integrator.simulate(self.model, self.state_0, self.state_1, self.sim_dt)
+            self.integrator.simulate(
+                self.model, self.state_0, self.state_1, self.sim_dt
+            )
             self.state_0, self.state_1 = self.state_1, self.state_0
 
     def set_leg_poses(self, actions):
-        if len(actions) != 12:
-            raise AssertionError(f"Expected 12 actions, got {len(actions)}")
-        
-        actions = actions * self.num_envs
+        action_space_size = 12 * self.num_envs
+        if len(actions) != action_space_size:
+            raise ValueError(
+                f"Expected {action_space_size} actions, but got {len(actions)}"
+            )
+
         self.model.joint_act = wp.array(actions, dtype=wp.float32)
 
     def step(self, actions):
         self.set_leg_poses(actions)
-        
+
         if self.use_cuda_graph:
             wp.capture_launch(self.graph)
         else:
@@ -121,18 +130,30 @@ class Example:
         self.renderer.render(self.state_0)
         self.renderer.end_frame()
 
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--device", type=str, default=None, help="Override the default Warp device.")
-    parser.add_argument("--num-frames", type=int, default=300, help="Total number of frames.")
-    parser.add_argument("--num-envs", type=int, default=3, help="Total number of simulated environments.")
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--device", type=str, default=None, help="Override the default Warp device."
+    )
+    parser.add_argument(
+        "--num-frames", type=int, default=300, help="Total number of frames."
+    )
+    parser.add_argument(
+        "--num-envs",
+        type=int,
+        default=3,
+        help="Total number of simulated environments.",
+    )
 
     args = parser.parse_known_args()[0]
 
     with wp.ScopedDevice(args.device):
-        example = Example(num_envs=args.num_envs)
+        example = RobotDogExample(num_envs=args.num_envs)
         # [
         #     (front right leg out),
         #     (front right leg forward),
@@ -151,15 +172,15 @@ if __name__ == "__main__":
         #     (back left forearm forward),
         # ]
         # left and right directions are reversed
-        
-        actions = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6]
+
+        actions = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6] * args.num_envs # fmt: skip
 
         for i in range(args.num_frames):
             example.step(actions)
             example.render()
 
             if i % 10 == 0:
-                # Stretch the right leg to the side 
+                # Stretch the right leg to the side
                 # actions[0] += 0.1
 
                 # Stretch the right leg forward
@@ -169,14 +190,9 @@ if __name__ == "__main__":
                 # actions[2] += 0.1
 
                 # Stretch the left leg forward
-                actions[4] -= 0.1 
+                actions[4] -= 0.1
 
                 # Back right leg backwards
                 # actions[7] += 0.1
 
-
         example.renderer.save()
-
-
-
-

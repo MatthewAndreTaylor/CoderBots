@@ -25,6 +25,12 @@ class MountainCarWidget(anywidget.AnyWidget):
         super().__init__()
         if sim_env is None:
             sim_env = MountainCarEnv()
+
+        if sim_env.num_envs != 1:
+            raise ValueError(
+                "MountainCarWidget currently only supports single environment."
+            )
+
         self.sim_env = sim_env
         self.sim_state = self.sim_env.reset()
 
