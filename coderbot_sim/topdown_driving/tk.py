@@ -61,6 +61,7 @@ class TopDownDrivingTkFrontend(_tk_base.TkBaseFrontend):
             sim_env = TopDownDrivingEnv()
         self.sim_env = sim_env
         self._viewport_size = viewport_size
+        self.show_rays = False
 
         self.keys = set()
 
@@ -147,7 +148,10 @@ class TopDownDrivingTkFrontend(_tk_base.TkBaseFrontend):
                 outline="black",
                 tags="car",
             )
-
+            
+        if not self.show_rays:
+            return
+        
         ray_offsets = [
             -RAY_SPREAD * 0.5 + RAY_SPREAD * i / (RAY_COUNT - 1)
             for i in range(RAY_COUNT)

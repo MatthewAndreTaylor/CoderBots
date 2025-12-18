@@ -71,8 +71,9 @@ def cast_rays(x, y, angle):
     tmin = np.full_like(rox, -1e9)
     tmax = np.full_like(rox, 1e9)
     mask_x = np.abs(rdxl) > EPS
-    tx1 = (-W_HW - rox) / rdxl
-    tx2 = (W_HW - rox) / rdxl
+    safe_rdxl = np.where(mask_x, rdxl, 1.0)
+    tx1 = (-W_HW - rox) / safe_rdxl
+    tx2 = (W_HW - rox) / safe_rdxl
     tmin = np.where(mask_x, np.maximum(tmin, np.minimum(tx1, tx2)), tmin)
     tmax = np.where(mask_x, np.minimum(tmax, np.maximum(tx1, tx2)), tmax)
     mask_y = np.abs(rdyl) > EPS
