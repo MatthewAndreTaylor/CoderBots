@@ -34,15 +34,12 @@ class MountainCarTkFrontend(_tk_base.TkBaseFrontend):
             self._draw_state(state)
         return state
 
-    def _create_window(self):
+    def _create_window(self, root):
         w, h = self._viewport_size
-        root = tk.Tk()
         root.title("Mountain Car")
-        root.protocol("WM_DELETE_WINDOW", self._on_close)
         canvas = tk.Canvas(root, width=w, height=h, bg="#eeeeee")
         canvas.pack(fill="both", expand=True)
         self.bring_to_front(root)
-
         self._root = root
         self._canvas = canvas
         self._draw_state(self.sim_env.reset())

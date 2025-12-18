@@ -13,11 +13,16 @@ class TkBaseFrontend(ABC):
     def render(self):
         if self._thread is not None:
             return
-        self._thread = threading.Thread(target=self._create_window, daemon=True)
+        self._thread = threading.Thread(target=self._window_hook, daemon=True)
         self._thread.start()
 
+    def _window_hook(self):
+        root = tk.Tk()
+        root.protocol("WM_DELETE_WINDOW", self._on_close)
+        self._create_window(root)
+
     @abstractmethod
-    def _create_window(self):
+    def _create_window(self, root):
         pass
 
     def bring_to_front(self, root):
