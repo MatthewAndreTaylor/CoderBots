@@ -1,8 +1,14 @@
 # written by: Matthew Taylor
 # source: https://github.com/MatthewAndreTaylor/WarpSimBalance
 
-import warp as wp
-import warp.sim.render
+try:
+    import warp as wp
+    import warp.sim.render
+except ImportError:
+    raise ImportError(
+        "Warp is not installed. Install using `pip install coderbot_sim[warp]`"
+    )
+
 import numpy as np
 
 

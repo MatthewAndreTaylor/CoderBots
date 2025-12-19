@@ -3,9 +3,14 @@ import os
 
 import numpy as np
 
-import warp as wp
-import warp.examples
-import warp.sim.render
+try:
+    import warp as wp
+    import warp.examples
+    import warp.sim.render
+except ImportError:
+    raise ImportError(
+        "Warp is not installed. Install using `pip install coderbot_sim[warp]`"
+    )
 
 
 def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):

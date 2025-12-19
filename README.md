@@ -15,8 +15,17 @@ Users can setup thier own environments and modify scenarios through a simple jso
 
 ## Get Started 🚀
 
+The baseline Python only simulation environments
+
 ```bash
 pip install coderbot_sim
 ```
+
+Warp simulation environments can be installed via
+
+```bash
+pip install coderbot_sim[warp]
+```
+
 
 

@@ -12,16 +12,19 @@ dependencies = [
     "jupyter-ui-poll"
 ]
 
+[project.optional-dependencies]
+warp = ["warp-lang==1.8.1"]
+
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["coderbot_sim"]
+packages = ["coderbot_sim", "coderbot_sim_warp"]
 include-package-data = true
 
 [tool.setuptools.package-data]
 coderbot_sim = ["**/*"]
-
+coderbot_sim_warp = ["**/*"]
 
 
