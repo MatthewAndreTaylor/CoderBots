@@ -1,7 +1,7 @@
 import argparse
 import warp as wp
 import numpy as np
-from coderbot_sim_warp.simple_quadruped import SimpleRobotDogExample
+from tinysim_warp.simple_quadruped import SimpleRobotDogExample
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(

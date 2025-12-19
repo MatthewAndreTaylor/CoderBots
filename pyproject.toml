@@ -1,10 +1,26 @@
 [project]
-name = "coderbot-sim"
-version = "0.0.8"
-description = "starting robotics with simple simulation environments"
+name = "tinysim"
+version = "0.0.1"
+description = "small modular simulation environments"
 authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},
 ]
+requires-python = ">=3.9"
+classifiers = [
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+urls = {Homepage = "https://github.com/MatthewAndreTaylor/TinySim"}
+keywords = ["jupyter", "simulation"]
 
 dependencies = [
     "numpy",
@@ -15,16 +31,20 @@ dependencies = [
 [project.optional-dependencies]
 warp = ["warp-lang==1.8.1"]
 
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["coderbot_sim", "coderbot_sim_warp"]
+packages = ["tinysim", "tinysim_warp"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-coderbot_sim = ["**/*"]
-coderbot_sim_warp = ["**/*"]
+tinysim = ["**/*"]
+tinysim_warp = ["**/*"]
 
 

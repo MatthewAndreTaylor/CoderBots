@@ -116,6 +116,13 @@ class TopDownDrivingEnv(SimEnvironment):
         self.checkpoint_idx = np.zeros(self.num_envs, dtype=np.int32)
         cx, cy = CHECKPOINTS[0]
         self.prev_dist = np.hypot(self.x - cx, self.y - cy)
+        return {
+            "x": self.x,
+            "y": self.y,
+            "angle": self.angle,
+            "velocity": self.velocity,
+            "rays": self.rays,
+        }
 
     def step(self, action, dt=0.02):
         throttle = action.get("throttle", 0.0)
@@ -156,6 +163,7 @@ class TopDownDrivingEnv(SimEnvironment):
         self.rays = cast_rays(self.x, self.y, self.angle)
 
         # TODO: should reward be scaled by the distance between checkpoints?
+        # return done if the car hits a wall?
         cp = CHECKPOINTS[self.checkpoint_idx]
         dist = np.hypot(self.x - cp[:, 0], self.y - cp[:, 1])
 
