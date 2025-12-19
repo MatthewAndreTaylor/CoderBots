@@ -1,5 +1,6 @@
 import math
 import os
+import pathlib
 
 import numpy as np
 
@@ -19,14 +20,15 @@ def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):
     return env_offsets
 
 
-class RobotDogExample:
+class SimpleRobotDogExample:
     def __init__(self, use_cuda_graph=False, headless=False, num_envs=8):
         articulation_builder = wp.sim.ModelBuilder()
         rot_x = wp.quat_from_axis_angle(wp.vec3(1.0, 0.0, 0.0), -math.pi * 0.5)
         rot_y = wp.quat_from_axis_angle(wp.vec3(0.0, 1.0, 0.0), math.pi * 0.5)
-        xform = wp.transform(wp.vec3(0.0, 0.65, 0.0), rot_y * rot_x)
+        xform = wp.transform(wp.vec3(0.0, 0.35, 0.0), rot_y * rot_x)
         wp.sim.parse_urdf(
-            os.path.join(warp.examples.get_asset_directory(), "quadruped.urdf"),
+            # os.path.join(warp.examples.get_asset_directory(), "quadruped.urdf"),
+            str(pathlib.Path(__file__).parent / "simple_quadruped.urdf"),
             articulation_builder,
             xform=xform,
             floating=True,
@@ -58,8 +60,8 @@ class RobotDogExample:
             builder.add_builder(
                 articulation_builder, xform=wp.transform(offsets[i], wp.quat_identity())
             )
-            builder.joint_q[-12:] = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6] # fmt: skip
-            builder.joint_act[-12:] = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6] # fmt: skip
+            builder.joint_q[-8:] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # fmt: skip
+            builder.joint_act[-8:] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # fmt: skip
             builder.joint_axis_mode = [wp.sim.JOINT_MODE_TARGET_POSITION] * len(
                 builder.joint_axis_mode
             )
@@ -108,7 +110,7 @@ class RobotDogExample:
             self.state_0, self.state_1 = self.state_1, self.state_0
 
     def set_leg_poses(self, actions):
-        action_space_size = 12 * self.num_envs
+        action_space_size = 8 * self.num_envs
         if len(actions) != action_space_size:
             raise ValueError(
                 f"Expected {action_space_size} actions, but got {len(actions)}"
@@ -141,7 +143,7 @@ if __name__ == "__main__":
         "--device", type=str, default=None, help="Override the default Warp device."
     )
     parser.add_argument(
-        "--num-frames", type=int, default=300, help="Total number of frames."
+        "--num-frames", type=int, default=1500, help="Total number of frames."
     )
     parser.add_argument(
         "--num-envs",
@@ -153,46 +155,10 @@ if __name__ == "__main__":
     args = parser.parse_known_args()[0]
 
     with wp.ScopedDevice(args.device):
-        example = RobotDogExample(num_envs=args.num_envs)
-        # [
-        #     (front right leg out),
-        #     (front right leg forward),
-        #     (front right forearm forward),
+        example = SimpleRobotDogExample(num_envs=args.num_envs)
 
-        #     (front left leg out),
-        #     (front left leg forward),
-        #     (front left forearm forward),
-
-        #     (back right leg out),
-        #     (back right leg forward),
-        #     (back right forearm forward),
-
-        #     (back left leg out),
-        #     (back left leg forward),
-        #     (back left forearm forward),
-        # ]
-        # left and right directions are reversed
-
-        actions = [0.2, 0.4, -0.6, -0.2, -0.4, 0.6, -0.2, 0.4, -0.6, 0.2, -0.4, 0.6] * args.num_envs # fmt: skip
-
-        for i in range(args.num_frames):
-            example.step(actions)
+        for frame in range(args.num_frames):
+            example.step(np.zeros(8).repeat(args.num_envs))
             example.render()
 
-            if i % 10 == 0:
-                # Stretch the right leg to the side
-                # actions[0] += 0.1
-
-                # Stretch the right leg forward
-                actions[1] += 0.1
-
-                # Strecth the forearm foward
-                # actions[2] += 0.1
-
-                # Stretch the left leg forward
-                actions[4] -= 0.1
-
-                # Back right leg backwards
-                # actions[7] += 0.1
-
-        example.renderer.save()
+    example.renderer.save()
