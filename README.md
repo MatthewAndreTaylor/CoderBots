@@ -1,8 +1,8 @@
 
 # TinySim 
 
-[![PyPI](https://img.shields.io/pypi/v/coderbot-sim.svg)](https://pypi.org/project/coderbot-sim)
-[![Jupyterlite](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://matthewandretaylor.github.io/CoderBots/lab?path=example.ipynb)
+[![PyPI](https://img.shields.io/pypi/v/tinysim.svg)](https://pypi.org/project/tinysim)
+[![Jupyterlite](https://jupyterlite.rtfd.io/en/latest/_static/badge.svg)](https://matthewandretaylor.github.io/TinySim/lab?path=example.ipynb)
 
 The goal of this project is to create more minimal simulation environments for robotics and machine learning.
 

@@ -1,6 +1,6 @@
 [project]
 name = "tinysim"
-version = "0.0.1"
+version = "0.0.2"
 description = "small modular simulation environments"
 authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},

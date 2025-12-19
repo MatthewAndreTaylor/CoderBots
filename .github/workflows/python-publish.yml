@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/coderbot-sim
+      url: https://pypi.org/p/tinysim
     permissions:
       id-token: write
     steps:

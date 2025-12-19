@@ -9,7 +9,7 @@ try:
     import warp.sim.render
 except ImportError:
     raise ImportError(
-        "Warp is not installed. Install using `pip install coderbot_sim[warp]`"
+        "Warp is not installed. Install using `pip install tinysim[warp]`"
     )
 
 
