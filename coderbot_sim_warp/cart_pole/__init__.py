@@ -4,61 +4,34 @@
 import warp as wp
 import warp.sim.render
 import numpy as np
-import enum
 
 
-@wp.kernel
-def set_cart_kernel(
-    body_q: wp.array(dtype=wp.transform), control_pos: wp.array(dtype=wp.vec3)
-):
-    body_q[0] = wp.transform(control_pos[0], wp.quat_identity())
-
-
-class ActionSpaceType(enum.Enum):
-    CONTINUOUS = enum.auto()
-    DISCRETE = enum.auto()
+def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):
+    env_offset = np.array(env_offset, dtype=float)
+    axis = np.nonzero(env_offset)[0]
+    axis = axis[0] if len(axis) else 0
+    env_offsets = np.zeros((num_envs, 3))
+    env_offsets[:, axis] = np.arange(num_envs) * env_offset[axis]
+    env_offsets -= env_offsets.mean(axis=0)
+    env_offsets[:, 1] = 0.0
+    return env_offsets
 
 
 class CartPoleExample:
-    def __init__(self, use_cuda_graph=False, headless=False):
-        self.gravity = -1.0
-        builder = wp.sim.ModelBuilder(gravity=self.gravity)
-        self.create_cartpole(builder)
+    def __init__(self, use_cuda_graph=False, headless=False, num_envs=3):
+        self.actions = np.array([0.0, 0.5, -0.5])
+        self.num_envs = num_envs
 
-        self.action_space_type = ActionSpaceType.DISCRETE
-        self.actions = [
-            wp.vec3(0.0, 0.0, 0.0),  # No movement
-            wp.vec3(0.05, 0.0, 0.0),  # Move right
-            wp.vec3(-0.05, 0.0, 0.0),  # Move left
-        ]
-
-        self.sim_time = 0.0
-        self.current_pos = wp.vec3(0.0, 2.0, 0.0)
-        self.current_pos_array = wp.array(
-            [self.current_pos], dtype=wp.vec3, device=wp.get_device()
-        )
-        self.curr_speed = wp.vec3(0.0, 0.0, 0.0)
-
-        fps = 120
+        fps = 60
         self.frame_dt = 1.0 / fps
-
-        self.sim_substeps = 30
+        self.sim_substeps = 10
         self.sim_dt = self.frame_dt / self.sim_substeps
 
-        # finalize model
-        self.model = builder.finalize()
-        self.model.ground = False
-        self.model.joint_attach_ke = 150.0
-        self.model.joint_attach_kd = 1.0
+        self.initialize()
 
         self.integrator = wp.sim.SemiImplicitIntegrator()
         self.renderer = wp.sim.render.SimRendererOpenGL(
             self.model, "example", headless=headless
-        )
-        self.state = self.model.state()
-
-        wp.sim.eval_fk(
-            self.model, self.model.joint_q, self.model.joint_qd, None, self.state
         )
 
         # CUDA graph
@@ -67,23 +40,23 @@ class CartPoleExample:
             and wp.get_device().is_cuda
             and wp.is_mempool_enabled(wp.get_device())
         )
-        self.graph = None
         if self.use_cuda_graph:
             with wp.ScopedCapture() as capture:
                 self.simulate()
             self.graph = capture.graph
 
-        self.step(action=1)
+        self.step(actions=[1] * self.num_envs)
 
-    def create_cartpole(self, builder):
+    def create_cartpole(self):
         """Create cartpole system using pure Python/Warp API"""
+        builder = wp.sim.ModelBuilder(gravity=-0.3)
         pole_size = wp.vec3(0.04, 1.0, 0.06)
         cart_body = builder.add_body(
-            origin=wp.transform(wp.vec3(0.0, 2.0, 0.0), wp.quat_identity()), m=0.0
+            origin=wp.transform(wp.vec3(0.0, 2.0, 0.0), wp.quat_identity()), m=1.0
         )
-        builder.add_shape_sphere(body=cart_body, radius=0.1, density=0.0)
+        builder.add_shape_sphere(body=cart_body, radius=0.1, density=100.0)
         pole_body = builder.add_body(
-            origin=wp.transform(wp.vec3(0.0, 2.5, 0.0), wp.quat_identity()),
+            origin=wp.transform(wp.vec3(0.0, 2.5, 0.0), wp.quat_identity()), m=0.01
         )
         builder.add_shape_box(
             body=pole_body,
@@ -93,12 +66,6 @@ class CartPoleExample:
             hz=pole_size[2] / 2.0,
             density=50.0,
         )
-        # builder.add_joint_ball(
-        #     parent=cart_body,
-        #     child=pole_body,
-        #     parent_xform=wp.transform(wp.vec3(0.0, 0.0, 0.0), wp.quat_identity()),
-        #     child_xform=wp.transform(wp.vec3(0.0, -0.5, 0.0), wp.quat_identity()),
-        # )
         builder.add_joint_revolute(
             parent=cart_body,
             child=pole_body,
@@ -110,54 +77,43 @@ class CartPoleExample:
             limit_ke=1.0e4,
             limit_kd=1.0e1,
         )
+        builder.add_joint_prismatic(
+            parent=-1,
+            child=cart_body,
+            axis=wp.vec3(1.0, 0.0, 0.0),
+            parent_xform=wp.transform(wp.vec3(0.0, 2.0, 0.0), wp.quat_identity()),
+            child_xform=wp.transform(wp.vec3(0.0, 0.0, 0.0), wp.quat_identity()),
+            limit_lower=-5.0,
+            limit_upper=5.0,
+            limit_ke=1.0e4,
+            limit_kd=1.0e2,
+        )
+        builder.joint_axis_mode = [wp.sim.JOINT_MODE_FORCE] * len(
+            builder.joint_axis_mode
+        )
+        return builder
 
-    def set_cart_trajectory(self, action):
+    def set_cart_trajectory(self, actions):
+        if len(actions) != self.num_envs:
+            raise ValueError("Length of actions must match number of environments.")
 
-        if self.action_space_type == ActionSpaceType.CONTINUOUS:
-            raise NotImplementedError("Continuous action space not implemented")
-
-        elif self.action_space_type == ActionSpaceType.DISCRETE:
-            discrete_action = self.actions[action]
-            # Add velocity damping/friction
-            damping = 0.97  # 0 < damping < 1, lower = more friction
-            self.curr_speed *= damping
-            self.curr_speed += discrete_action
-            self.current_pos += self.curr_speed * self.frame_dt
-
-            # copy buffer
-            new_pos = wp.array(
-                [self.current_pos], dtype=wp.vec3, device=wp.get_device()
-            )
-            wp.copy(self.current_pos_array, new_pos)
+        act = np.zeros(self.model.joint_dof_count, dtype=np.float32)
+        dof_indices = np.arange(self.num_envs) * 2 + 1
+        act[dof_indices] = self.actions[actions]
+        wp.copy(self.model.joint_act, wp.array(act, dtype=wp.float32))
 
     def is_fallen(self, pole_quat):
         qw = float(np.clip(pole_quat[3], -1.0, 1.0))
         tilt = 2.0 * np.arccos(qw)  # radians, in [0, pi]
-
-        # threshold: 90 degrees (tunable)
         max_tilt = np.deg2rad(90.0)
         return tilt > max_tilt
 
-    def reset(self):
-        self.current_pos = wp.vec3(0.0, 2.0, 0.0)
-        self.current_speed = wp.vec3(0.0, 0.0, 0.0)
-        self.sim_time = 0.0
-        builder = wp.sim.ModelBuilder(gravity=self.gravity)
-        self.create_cartpole(builder)
-        self.model = builder.finalize()
-        self.model.joint_attach_ke = 150.0
-        self.model.joint_attach_kd = 1.0
-        self.state = self.model.state()
-        self.step(action=1)
-        return self.get_state_vector()
-
-    def step(self, action):
+    def step(self, actions):
         """Apply action and step the simulation for one environment timestep.
 
         Returns (observation, reward, terminated)
         """
-        self.set_cart_trajectory(action)
-
+        self.set_cart_trajectory(actions)
         if self.use_cuda_graph:
             wp.capture_launch(self.graph)
         else:
@@ -165,12 +121,7 @@ class CartPoleExample:
 
         self.sim_time += self.frame_dt
         obs = self.get_state_vector()
-        pole_quat = obs[1:5]  # quaternion part (qx, qy, qz, qw)
-
-        # Check if the pole has fallen by computing the tilt angle from the
-        # quaternion. For the upright pole the quaternion is identity (angle=0).
-        # We compute angle = 2*arccos(qw). If it exceeds a threshold the pole
-        # is considered fallen.
+        pole_quat = obs[1:5]
         terminated = self.is_fallen(pole_quat)
         return obs, 1.0, terminated
 
@@ -181,9 +132,34 @@ class CartPoleExample:
                 self.model, self.state, self.state, self.sim_dt
             )
 
-        wp.launch(
-            set_cart_kernel, dim=1, inputs=[self.state.body_q, self.current_pos_array]
+    def reset(self):
+        self.initialize()
+        return self.step(actions=[1] * self.num_envs)
+
+    def initialize(self):
+        self.sim_time = 0.0
+        builder = wp.sim.ModelBuilder()
+        offsets = compute_env_offsets(self.num_envs)
+
+        for i in range(self.num_envs):
+            builder.add_builder(
+                self.create_cartpole(),
+                xform=wp.transform(offsets[i], wp.quat_identity()),
+            )
+
+        self.model = builder.finalize()
+        self.model.joint_attach_ke = 1000.0
+        self.model.joint_attach_kd = 1.0
+        self.state = self.model.state()
+
+        wp.sim.eval_fk(
+            self.model, self.model.joint_q, self.model.joint_qd, None, self.state
         )
+        self.joint_act_np = np.zeros(self.model.joint_dof_count, dtype=np.float32)
+        self.joint_act_wp = wp.array(
+            self.joint_act_np, dtype=float, device=wp.get_device()
+        )
+        self.model.joint_act = self.joint_act_wp
 
     def render(self):
         self.renderer.begin_frame(self.sim_time)
@@ -233,7 +209,7 @@ if __name__ == "__main__":
         import keyboard
 
     with wp.ScopedDevice(args.device):
-        example = CartPoleExample(use_cuda_graph=False)
+        example = CartPoleExample(use_cuda_graph=True)
 
         terminated = False
         check_terminated = True
@@ -257,7 +233,7 @@ if __name__ == "__main__":
                 else:
                     action = 0
 
-            obs, reward, terminated = example.step(action=action)
+            obs, reward, terminated = example.step(actions=[action] * example.num_envs)
             # print(f"Step {i}")
 
             if check_terminated and terminated:
