@@ -114,7 +114,7 @@ class RobotDogExample:
                 f"Expected {action_space_size} actions, but got {len(actions)}"
             )
 
-        self.model.joint_act = wp.array(actions, dtype=wp.float32)
+        wp.copy(self.model.joint_act, wp.array(actions, dtype=wp.float32))
 
     def step(self, actions):
         self.set_leg_poses(actions)

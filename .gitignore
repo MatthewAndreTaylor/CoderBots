@@ -29,6 +29,7 @@ examples/README.md
 
 # Sample model checkpoints
 *.pth
+*.npz
 
 # Distribution / packaging
 .Python

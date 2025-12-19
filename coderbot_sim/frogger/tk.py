@@ -35,11 +35,9 @@ class FroggerTkFrontend(_tk_base.TkBaseFrontend):
             self._draw_state(self.sim_env)
         return state
 
-    def _create_window(self):
+    def _create_window(self, root):
         w, h = self._viewport_size
-        root = tk.Tk()
         root.title("Frogger")
-        root.protocol("WM_DELETE_WINDOW", self._on_close)
         canvas = tk.Canvas(root, width=w, height=h, bg="#1E1E1E")
         canvas.pack(fill="both", expand=True)
         self._root = root
