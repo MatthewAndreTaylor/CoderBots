@@ -14,7 +14,7 @@ class TopDownDrivingWidget(anywidget.AnyWidget):
 
     sim_state = traitlets.Dict(default_value={}).tag(sync=True)
     wall_positions = traitlets.List(default_value=LOCAL_WALLS).tag(sync=True)
-    
+
     _viewport_size = traitlets.Tuple(
         traitlets.Int(), traitlets.Int(), default_value=(800, 600)
     ).tag(sync=True)
@@ -38,8 +38,7 @@ class TopDownDrivingWidget(anywidget.AnyWidget):
                     ui_poll(100)
         except Exception:
             pass
-        
-    
+
     def copy_py_state(self, sim_state: dict):
         self.sim_state = {
             "x": sim_state["x"].tolist(),
