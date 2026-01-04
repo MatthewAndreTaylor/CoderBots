@@ -26,5 +26,11 @@ To use the [warp](https://github.com/NVIDIA/warp) simulation environments.
 pip install tinysim[warp]
 ```
 
+To use the [mujoco](https://github.com/google-deepmind/mujoco) simulation environments.
+
+```bash
+pip install tinysim[mujoco]
+```
+
 
 
