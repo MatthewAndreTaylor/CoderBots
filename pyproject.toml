@@ -49,4 +49,7 @@ tinysim = ["**/*"]
 tinysim_warp = ["**/*"]
 tinysim_mujoco = ["**/*"]
 
-
+[tool.setuptools.exclude-package-data]
+tinysim = ["**/*.png"]
+tinysim_warp = ["**/*.png"]
+tinysim_mujoco = ["**/*.png"]
