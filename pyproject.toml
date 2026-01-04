@@ -1,6 +1,6 @@
 [project]
 name = "tinysim"
-version = "0.0.2"
+version = "0.0.3"
 description = "small modular simulation environments"
 authors = [
     {name = "Matthew Taylor", email = "matthew.taylor.andre@gmail.com"},
@@ -30,6 +30,7 @@ dependencies = [
 
 [project.optional-dependencies]
 warp = ["warp-lang==1.8.1"]
+mujoco = ["mujoco"]
 
 [project.readme]
 file = "README.md"
@@ -40,11 +41,12 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["tinysim", "tinysim_warp"]
+packages = ["tinysim", "tinysim_warp", "tinysim_mujoco"]
 include-package-data = true
 
 [tool.setuptools.package-data]
 tinysim = ["**/*"]
 tinysim_warp = ["**/*"]
+tinysim_mujoco = ["**/*"]
 
 

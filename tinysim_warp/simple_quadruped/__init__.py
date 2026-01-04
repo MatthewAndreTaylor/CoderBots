@@ -24,7 +24,7 @@ def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):
     return env_offsets
 
 
-class SimpleRobotDogExample:
+class SimpleRobotDogBaseEnv:
     def __init__(self, use_cuda_graph=False, headless=False, num_envs=8):
         articulation_builder = wp.sim.ModelBuilder()
         rot_x = wp.quat_from_axis_angle(wp.vec3(1.0, 0.0, 0.0), -math.pi * 0.5)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     args = parser.parse_known_args()[0]
 
     with wp.ScopedDevice(args.device):
-        example = SimpleRobotDogExample(num_envs=args.num_envs)
+        example = SimpleRobotDogBaseEnv(num_envs=args.num_envs)
 
         for frame in range(args.num_frames):
             example.step(np.zeros(8).repeat(args.num_envs))

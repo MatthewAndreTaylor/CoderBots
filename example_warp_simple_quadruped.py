@@ -1,7 +1,10 @@
 import argparse
 import warp as wp
 import numpy as np
-from tinysim_warp.simple_quadruped import SimpleRobotDogExample
+from tinysim_warp.simple_quadruped import SimpleRobotDogBaseEnv
+
+# requirements: `pip install tinysim[warp]`
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(
@@ -21,7 +24,7 @@ args = parser.parse_known_args()[0]
 
 
 with wp.ScopedDevice(args.device):
-    example = SimpleRobotDogExample(num_envs=args.num_envs)
+    example = SimpleRobotDogBaseEnv(num_envs=args.num_envs)
 
     HIP_AMP = 0.3
     THIGH_AMP = 0.5
