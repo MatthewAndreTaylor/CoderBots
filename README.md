@@ -22,7 +22,7 @@ pip install tinysim
 
 | [MountainCarEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/mountain_car) | [TopDownDrivingEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/topdown_driving) | [FroggerEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/frogger) | [FlappyEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/flappy) |
 |:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|
-| <img width="212" alt="mountain_car" src="https://github.com/user-attachments/assets/adbde7f4-6b4e-4c06-8dd3-ea278d5576ad" /> | <img width="212" alt="topdown_driving" src="https://github.com/user-attachments/assets/79dcbf45-055e-4a4e-b6ff-38e938e99a4e" /> | <img width="212" alt="frogger" src="https://github.com/user-attachments/assets/bb9a8382-b9a0-4280-ae23-cbd02e2d78f6" /> | <img width="212" alt="flappy" src="https://github.com/user-attachments/assets/b5e2a502-d9fe-4ff1-9e4e-a47f7e50ebd9" /> |
+| <img width="200" alt="mountain_car" src="https://github.com/user-attachments/assets/adbde7f4-6b4e-4c06-8dd3-ea278d5576ad" /> | <img width="200" alt="topdown_driving" src="https://github.com/user-attachments/assets/79dcbf45-055e-4a4e-b6ff-38e938e99a4e" /> | <img width="200" alt="frogger" src="https://github.com/user-attachments/assets/bb9a8382-b9a0-4280-ae23-cbd02e2d78f6" /> | <img width="200" alt="flappy" src="https://github.com/user-attachments/assets/b5e2a502-d9fe-4ff1-9e4e-a47f7e50ebd9" /> |
 
 
 To use the [warp](https://github.com/NVIDIA/warp) simulation environments.
