@@ -1,5 +1,7 @@
 import pathlib
 
+import imageio
+
 import numpy as np
 
 try:
@@ -48,6 +50,22 @@ class Viewer:
         self.cam.distance = 4.0
         self.cam.lookat[:] = np.array([0.0, 0.0, 0.0])
         self.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+
+    def capture_frame(self):
+        """Capture the current framebuffer and return as an image array (H, W, 3)."""
+        if self.window is None:
+            return None
+
+        glfw.make_context_current(self.window)
+        width, height = glfw.get_framebuffer_size(self.window)
+        viewport = mujoco.MjrRect(0, 0, width, height)
+
+        rgb_buffer = np.zeros((height, width, 3), dtype=np.uint8)
+        mujoco.mjr_readPixels(rgb_buffer, None, viewport, self.context)
+
+        # OpenGL framebuffer origin is bottom-left, flip vertically
+        rgb_buffer = np.flip(rgb_buffer, axis=0)
+        return rgb_buffer
 
     def render(self):
         if self.window is None:

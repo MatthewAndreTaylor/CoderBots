@@ -2,6 +2,9 @@ import tkinter as tk
 import threading
 from abc import ABC, abstractmethod
 
+from PIL import Image
+import io
+
 
 class TkBaseFrontend(ABC):
 
@@ -52,3 +55,13 @@ class TkBaseFrontend(ABC):
 
         if self._root:
             self._root.after(20, self._pump)
+
+
+    def capture_canvas(self):
+        """Capture the current canvas as a PIL Image."""
+        if not self._canvas:
+            return None
+        
+        ps = self._canvas.postscript(colormode='color')
+        img = Image.open(io.BytesIO(ps.encode('utf-8')))
+        return img
