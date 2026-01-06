@@ -23,7 +23,7 @@ def compute_env_offsets(num_envs, env_offset=(5.0, 0.0, 0.0)):
     return env_offsets
 
 
-class CartPoleExample:
+class CartPoleBaseEnv:
     def __init__(self, use_cuda_graph=False, headless=False, num_envs=3):
         self.actions = np.array([0.0, 0.5, -0.5])
         self.num_envs = num_envs
@@ -215,7 +215,7 @@ if __name__ == "__main__":
         import keyboard
 
     with wp.ScopedDevice(args.device):
-        example = CartPoleExample(use_cuda_graph=True)
+        example = CartPoleBaseEnv(use_cuda_graph=True)
 
         terminated = False
         check_terminated = True
