@@ -35,6 +35,11 @@ To use the [warp](https://github.com/NVIDIA/warp) simulation environments.
 pip install tinysim[warp]
 ```
 
+| [CartPoleBaseEnv](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_warp/cart_pole) | [SimpleRobotDogBaseEnv](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_warp/simple_quadruped) |
+|:-------------------------:|:-------------------------:|
+| <img width="256" alt="warp_cart_pole" src="https://github.com/user-attachments/assets/f29f3749-d836-4afa-9f27-8578aca020dc" /> | <img width="256" alt="warp_simple_quadruped" src="https://github.com/user-attachments/assets/a966e881-358e-47ee-b0e1-b67eba903987" /> |
+
+
 To use the [mujoco](https://github.com/google-deepmind/mujoco) simulation environments.
 
 ```bash
