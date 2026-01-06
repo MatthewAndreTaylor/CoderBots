@@ -21,6 +21,8 @@ class FroggerTkFrontend(_tk_base.TkBaseFrontend):
         self.sim_env = sim_env
         self._viewport_size = viewport_size
 
+        self.keys = set()
+
     async def step(self, action, dt=0.01):
         state = self.sim_env.step(action, dt=dt)
         if self._root:
@@ -42,6 +44,10 @@ class FroggerTkFrontend(_tk_base.TkBaseFrontend):
         canvas.pack(fill="both", expand=True)
         self._root = root
         self._canvas = canvas
+
+        root.bind("<KeyPress>", lambda e: self.keys.add(e.keysym))
+        root.bind("<KeyRelease>", lambda e: self.keys.discard(e.keysym))
+
         self.bring_to_front(root)
         self._draw_state(self.sim_env)
         self._pump()

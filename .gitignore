@@ -27,6 +27,8 @@ ipysketch_lite/labextension
 _output/
 examples/README.md
 
+project_files
+
 # Sample model checkpoints
 *.pth
 *.npz
