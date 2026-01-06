@@ -22,11 +22,11 @@ pip install tinysim
 
 | [MountainCarEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/mountain_car) | [TopDownDrivingEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/topdown_driving) |
 |:-------------------------:|:-------------------------:|
-| <img width="256" alt="mountain_car" src="https://github.com/user-attachments/assets/adbde7f4-6b4e-4c06-8dd3-ea278d5576ad" /> | <img width="256" alt="topdown_driving" src="https://github.com/user-attachments/assets/79dcbf45-055e-4a4e-b6ff-38e938e99a4e" /> |
+| <img width="312" alt="mountain_car" src="https://github.com/user-attachments/assets/adbde7f4-6b4e-4c06-8dd3-ea278d5576ad" /> | <img width="312" alt="topdown_driving" src="https://github.com/user-attachments/assets/79dcbf45-055e-4a4e-b6ff-38e938e99a4e" /> |
 
 | [FroggerEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/frogger) | [FlappyEnv](https://github.com/MatthewAndreTaylor/TinySim/blob/main/tinysim/flappy) |
 |:-------------------------:|:-------------------------:|
-| <img width="256" alt="frogger" src="https://github.com/user-attachments/assets/bb9a8382-b9a0-4280-ae23-cbd02e2d78f6" /> | <img width="256" alt="flappy" src="https://github.com/user-attachments/assets/b5e2a502-d9fe-4ff1-9e4e-a47f7e50ebd9" /> |
+| <img width="312" alt="frogger" src="https://github.com/user-attachments/assets/bb9a8382-b9a0-4280-ae23-cbd02e2d78f6" /> | <img width="312" alt="flappy" src="https://github.com/user-attachments/assets/b5e2a502-d9fe-4ff1-9e4e-a47f7e50ebd9" /> |
 
 
 To use the [warp](https://github.com/NVIDIA/warp) simulation environments.
@@ -37,7 +37,7 @@ pip install tinysim[warp]
 
 | [CartPoleBaseEnv](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_warp/cart_pole) | [SimpleRobotDogBaseEnv](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_warp/simple_quadruped) |
 |:-------------------------:|:-------------------------:|
-| <img width="256" alt="warp_cart_pole" src="https://github.com/user-attachments/assets/f29f3749-d836-4afa-9f27-8578aca020dc" /> | <img width="256" alt="warp_simple_quadruped" src="https://github.com/user-attachments/assets/a966e881-358e-47ee-b0e1-b67eba903987" /> |
+| <img width="312" alt="warp_cart_pole" src="https://github.com/user-attachments/assets/f29f3749-d836-4afa-9f27-8578aca020dc" /> | <img width="312" alt="warp_simple_quadruped" src="https://github.com/user-attachments/assets/a966e881-358e-47ee-b0e1-b67eba903987" /> |
 
 
 To use the [mujoco](https://github.com/google-deepmind/mujoco) simulation environments.
