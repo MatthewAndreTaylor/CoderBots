@@ -4,7 +4,7 @@ env = ManipulationBaseEnv(headless=False)
 
 for _ in range(100):
     env.step()
-    
+
 env.viewer.close()
 
 
@@ -15,6 +15,6 @@ env.viewer.close()
 
 # for _ in range(1000):
 #     env.render()
-    
-    
+
+
 # env.viewer.close()

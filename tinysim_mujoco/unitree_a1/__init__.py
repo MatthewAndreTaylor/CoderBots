@@ -27,7 +27,7 @@ class UnitreeA1BaseEnv:
         )
 
         if not headless:
-            if "notebook" in kwargs:
+            if kwargs.get("notebook", False):
                 self.viewer = NotebookViewer(self.model, self.data)
             else:
                 self.viewer = GLViewer(self.model, self.data)

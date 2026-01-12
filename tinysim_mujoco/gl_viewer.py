@@ -70,8 +70,7 @@ class GLViewer:
             self.window = None
             self.scene = None
             self.context.free()
-            
-    
+
     def capture_frame(self):
         """Capture the current framebuffer and return as an image array (H, W, 3)."""
         if self.window is None:

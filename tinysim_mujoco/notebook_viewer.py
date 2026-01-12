@@ -23,7 +23,6 @@ class NotebookViewer:
         self.renderer.update_scene(self.data, camera=self.cam)
         pil = PILImage.fromarray(self.renderer.render())
         self.display = display(pil, display_id=True)
-        
 
     def render(self):
         self.renderer.update_scene(self.data, camera=self.cam)
