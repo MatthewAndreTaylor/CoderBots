@@ -4,7 +4,8 @@ import numpy as np
 
 try:
     import mujoco
-    from .. import Viewer
+    from ..gl_viewer import GLViewer
+    from ..notebook_viewer import NotebookViewer
 except ImportError:
     raise ImportError(
         "Mujoco is not properly installed. Install using `pip install tinysim[mujoco]`"
@@ -13,7 +14,7 @@ except ImportError:
 
 class UnitreeA1BaseEnv:
 
-    def __init__(self, headless=False):
+    def __init__(self, headless=False, **kwargs):
         model_path = str(pathlib.Path(__file__).parent / "unitree_a1/scene.xml")
         self.model = mujoco.MjModel.from_xml_path(model_path)
         self.data = mujoco.MjData(self.model)
@@ -26,7 +27,10 @@ class UnitreeA1BaseEnv:
         )
 
         if not headless:
-            self.viewer = Viewer(self.model, self.data)
+            if "notebook" in kwargs:
+                self.viewer = NotebookViewer(self.model, self.data)
+            else:
+                self.viewer = GLViewer(self.model, self.data)
         else:
             self.viewer = None
 
@@ -71,8 +75,8 @@ class UnitreeA1BaseEnv:
 
 
 class UnitreeA1WalkEnv:
-    def __init__(self, reward_weights, cost_weights, headless=False):
-        self.env = UnitreeA1BaseEnv(headless=headless)
+    def __init__(self, reward_weights, cost_weights, **kwargs):
+        self.env = UnitreeA1BaseEnv(**kwargs)
         self.frame_skip = 20
         self.obs_dim = 45
         self._previous_observation = np.zeros(self.obs_dim, dtype=np.float32)

@@ -4,7 +4,8 @@ import numpy as np
 
 try:
     import mujoco
-    from .. import Viewer
+    from ..gl_viewer import GLViewer
+    from ..notebook_viewer import NotebookViewer
 except ImportError:
     raise ImportError(
         "Mujoco is not properly installed. Install using `pip install tinysim[mujoco]`"
@@ -13,14 +14,17 @@ except ImportError:
 
 class ManipulationBaseEnv:
     
-    def __init__(self, headless=False):
+    def __init__(self, headless=False, **kwargs):
         model_path = str(pathlib.Path(__file__).parent / "xmls/scene.xml")
         self.model = mujoco.MjModel.from_xml_path(model_path)
         self.data = mujoco.MjData(self.model)
         mujoco.mj_forward(self.model, self.data)
         
         if not headless:
-            self.viewer = Viewer(self.model, self.data)
+            if "notebook" in kwargs:
+                self.viewer = NotebookViewer(self.model, self.data)
+            else:
+                self.viewer = GLViewer(self.model, self.data)
         else:
             self.viewer = None
             
