@@ -18,6 +18,7 @@ class UnitreeA1BaseEnv:
         self.model = mujoco.MjModel.from_xml_path(model_path)
         self.data = mujoco.MjData(self.model)
         self.action_space_size = self.model.nu
+        mujoco.mj_forward(self.model, self.data)
 
         self.default_joint_position = np.array(
             [-0.05, 0.8, -1.5, 0.05, 0.8, -1.5, -0.03, 0.9, -1.4, 0.03, 0.9, -1.4],
@@ -30,8 +31,7 @@ class UnitreeA1BaseEnv:
             self.viewer = None
 
     def step(self, actions, n_frames=20):
-        if self.viewer is not None:
-            self.render()
+        self.render()
 
         if len(actions) != self.action_space_size:
             raise ValueError(
@@ -43,14 +43,8 @@ class UnitreeA1BaseEnv:
         mujoco.mj_rnePostConstraint(self.model, self.data)
 
     def render(self):
-        if self.viewer is None:
-            return
-        self.viewer.render()
-
-    def set_state(self, qpos, qvel):
-        self.data.qpos[:] = qpos
-        self.data.qvel[:] = qvel
-        mujoco.mj_forward(self.model, self.data)
+        if self.viewer:
+            self.viewer.render()
 
     def close(self):
         self.viewer.close()

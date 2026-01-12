@@ -1,5 +1,6 @@
-<mujoco model="a1 scene">
-  <include file="a1.xml"/>
+<mujoco model="panda scene">
+  <include file="panda.xml"/>
+  <include file="table.xml"/>
   <statistic center="0 0 0.1" extent="0.8"/>
 
   <visual>
