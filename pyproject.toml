@@ -44,6 +44,7 @@ build-backend = "setuptools.build_meta"
 packages = ["tinysim", "tinysim_warp", "tinysim_mujoco"]
 include-package-data = true
 
+# TODO: move assets to separate package - example: tinysim-{ext}-assets
 [tool.setuptools.package-data]
 tinysim = ["**/*"]
 tinysim_warp = ["**/*"]
