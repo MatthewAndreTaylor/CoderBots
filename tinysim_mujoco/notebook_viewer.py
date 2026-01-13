@@ -5,15 +5,12 @@ from PIL import Image as PILImage
 
 
 class NotebookViewer:
-    def __init__(self, model, data):
+    def __init__(self, model, data, width=640, height=480):
         self.model = model
         self.data = data
-        self.width = 640
-        self.height = 480
-
         self.cam = mujoco.MjvCamera()
         self.opt = mujoco.MjvOption()
-        self.renderer = mujoco.Renderer(model, self.height, self.width, max_geom=500)
+        self.renderer = mujoco.Renderer(model, height, width, max_geom=500)
 
         self.cam.azimuth = 90
         self.cam.elevation = -25

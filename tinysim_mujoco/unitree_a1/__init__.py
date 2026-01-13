@@ -50,9 +50,6 @@ class UnitreeA1BaseEnv:
         if self.viewer:
             self.viewer.render()
 
-    def close(self):
-        self.viewer.close()
-
     def reset(self):
         mujoco.mj_resetData(self.model, self.data)
         self.data.qpos[0:3] = [0.0, 0.0, 0.3]
@@ -77,6 +74,7 @@ class UnitreeA1BaseEnv:
 class UnitreeA1WalkEnv:
     def __init__(self, reward_weights, cost_weights, **kwargs):
         self.env = UnitreeA1BaseEnv(**kwargs)
+        self.viewer = self.env.viewer
         self.frame_skip = 20
         self.obs_dim = 45
         self._previous_observation = np.zeros(self.obs_dim, dtype=np.float32)

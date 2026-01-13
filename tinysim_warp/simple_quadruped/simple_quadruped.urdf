@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot name="quadruped">
-
-    <!-- Base -->
     <link name="base">
         <visual>
             <origin rpy="0 1.57079632679 0" xyz="0 0 0"/>
@@ -22,7 +20,6 @@
         </inertial>
     </link>
 
-    <!-- LEFT FRONT LEG -->
     <link name="LF_HAA">
         <visual>
             <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
@@ -77,9 +74,6 @@
         <limit effort="80.0" velocity="20."/>
     </joint>
 
-
-
-    <!-- RIGHT FRONT LEG -->
     <link name="RF_HAA">
         <visual>
             <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
@@ -134,7 +128,6 @@
         <limit effort="80.0" velocity="20."/>
     </joint>
 
-    <!-- LEFT HIND LEG -->
     <link name="LH_HAA">
         <visual>
             <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
@@ -189,7 +182,6 @@
         <limit effort="80.0" velocity="20."/>
     </joint>
 
-    <!-- RIGHT HIND LEG -->
     <link name="RH_HAA">
         <visual>
             <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
@@ -243,5 +235,4 @@
         <axis xyz="1 0 0"/>
         <limit effort="80.0" velocity="20."/>
     </joint>
-
 </robot>

@@ -52,7 +52,6 @@
     <material class="panda" name="green" rgba="0 1 0 1"/>
     <material class="panda" name="light_blue" rgba="0.039216 0.541176 0.780392 1"/>
 
-    <!-- Collision meshes -->
     <mesh name="link0_collision" file="link0.stl"/>
     <mesh name="link1_collision" file="link1.stl"/>
     <mesh name="link2_collision" file="link2.stl"/>
@@ -65,7 +64,6 @@
     <mesh name="link7_collision" file="link7.stl"/>
     <mesh name="hand_collision" file="hand.stl"/>
 
-    <!-- Visual meshes -->
     <mesh file="link0_0.obj"/>
     <mesh file="link0_1.obj"/>
     <mesh file="link0_2.obj"/>

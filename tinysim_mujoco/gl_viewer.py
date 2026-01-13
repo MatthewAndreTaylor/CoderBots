@@ -3,8 +3,33 @@ import mujoco
 import glfw
 
 
+class OffScreenRenderer:
+    def __init__(self, model, data, cam_id):
+        self.model = model
+        self.data = data
+        self.cam_id = cam_id
+        self.renderer = mujoco.Renderer(self.model)
+        self.renderer.update_scene(self.data, camera=self.cam_id)
+
+    def render(self):
+        self.renderer.update_scene(self.data, camera=self.cam_id)
+
+    def capture_frame(self):
+        return self.renderer.render()
+
+
+def default_camera():
+    cam = mujoco.MjvCamera()
+    cam.azimuth = 90.0
+    cam.elevation = -25.0
+    cam.distance = 4.0
+    cam.lookat[:] = np.array([0.0, 0.0, 0.0])
+    cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+    return cam
+
+
 class GLViewer:
-    def __init__(self, model, data, width=1200, height=900):
+    def __init__(self, model, data, cam_id=-1, width=1200, height=900):
         self.width = width
         self.height = height
         self.model = model
@@ -14,6 +39,13 @@ class GLViewer:
         self.context = None
         if not glfw.init():
             raise RuntimeError("Failed to initialize GLFW")
+
+        if cam_id != -1:
+            self.cam = mujoco.MjvCamera()
+            self.cam.fixedcamid = cam_id
+            self.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+        else:
+            self.cam = default_camera()
 
         self._create_window()
 
@@ -27,18 +59,11 @@ class GLViewer:
         glfw.swap_interval(1)
         glfw.set_window_close_callback(self.window, self._on_close)
 
-        self.cam = mujoco.MjvCamera()
         self.opt = mujoco.MjvOption()
         self.scene = mujoco.MjvScene(self.model, maxgeom=500)
         self.context = mujoco.MjrContext(
             self.model, mujoco.mjtFontScale.mjFONTSCALE_150
         )
-
-        self.cam.azimuth = 90.0
-        self.cam.elevation = -25.0
-        self.cam.distance = 4.0
-        self.cam.lookat[:] = np.array([0.0, 0.0, 0.0])
-        self.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
 
     def render(self):
         if self.window is None:

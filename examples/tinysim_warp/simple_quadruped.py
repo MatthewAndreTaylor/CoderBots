@@ -1,10 +1,10 @@
 import argparse
-import warp as wp
-import numpy as np
 from tinysim_warp.simple_quadruped import SimpleRobotDogBaseEnv
 
-# requirements: `pip install tinysim[warp]`
+import warp as wp
+import numpy as np
 
+# requirements: `pip install tinysim[warp]`
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument(

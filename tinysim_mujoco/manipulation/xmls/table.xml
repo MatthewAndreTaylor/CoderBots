@@ -5,10 +5,8 @@
               specular="0.2"
               shininess="0.2"/>
   </asset>
-
   <worldbody>
     <body name="table" pos="0.55 0 0">
-
       <geom name="table_top"
             type="box"
             size="0.25 0.35 0.02"
@@ -16,13 +14,11 @@
             material="table_wood"
             contype="1"
             conaffinity="1"/>
-
       <geom name="leg_fl" type="box" size="0.025 0.025 0.25" pos=" 0.22  0.32 0.25"/>
       <geom name="leg_fr" type="box" size="0.025 0.025 0.25" pos=" 0.22 -0.32 0.25"/>
       <geom name="leg_bl" type="box" size="0.025 0.025 0.25" pos="-0.22  0.32 0.25"/>
       <geom name="leg_br" type="box" size="0.025 0.025 0.25" pos="-0.22 -0.32 0.25"/>
     </body>
-
     <body name="box1" pos="0.35 0 0.60">
     <freejoint/>
     <geom name="box1_geom"
