@@ -80,7 +80,6 @@ class ManipulationEnvV0:
         self.env.step(n_frames=self.frame_skip)
         
     def reset_mocap_welds(self, model, data):
-        """Resets the mocap welds that we use for actuation."""
         if model.nmocap > 0 and model.eq_data is not None:
             for i in range(model.eq_data.shape[0]):
                 if model.eq_type[i] == mujoco.mjtEq.mjEQ_WELD:
@@ -88,10 +87,6 @@ class ManipulationEnvV0:
         mujoco.mj_forward(model, data)
             
     def reset_mocap2body_xpos(self, model, data):
-        """Resets the position and orientation of the mocap bodies to the same
-        values as the bodies they're welded to.
-        """
-
         if model.eq_type is None or model.eq_obj1id is None or model.eq_obj2id is None:
             return
         for eq_type, obj1_id, obj2_id in zip(
@@ -114,33 +109,17 @@ class ManipulationEnvV0:
             data.mocap_quat[mocap_id][:] = data.xquat[body_idx]
         
     def mocap_set_action(self, model, data, action):
-        """Update the position of the mocap body with the desired action.
-
-        The action controls the robot using mocaps. Specifically, bodies
-        on the robot (for example the gripper wrist) is controlled with
-        mocap bodies. In this case the action is the desired difference
-        in position and orientation (quaternion), in world coordinates,
-        of the target body. The mocap is positioned relative to
-        the target body according to the delta, and the MuJoCo equality
-        constraint optimizer tries to center the welded body on the mocap.
-        """
         if model.nmocap > 0:
             action, _ = np.split(action, (model.nmocap * 7,))
             action = action.reshape(model.nmocap, 7)
-
             pos_delta = action[:, :3]
             quat_delta = action[:, 3:]
-
             self.reset_mocap2body_xpos(model, data)
             data.mocap_pos[:] = data.mocap_pos + pos_delta
             data.mocap_quat[:] = data.mocap_quat + quat_delta
         
         
     def ctrl_set_action(self, model, data, action):
-        """For torque actuators it copies the action into mujoco ctrl field.
-
-        For position actuators it sets the target relative to the current qpos.
-        """
         if model.nmocap > 0:
             _, action = np.split(action, (model.nmocap * 7,))
 
@@ -305,7 +284,6 @@ class ManipulationEnvV0:
 
     def get_site_xmat(self, model, data, name: str):
         site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, name)
-        assert site_id != -1, f"Site with name '{name}' is not part of the model!"
         return data.site_xmat[site_id].reshape(3, 3)
 
     def get_body_state(self, name):
