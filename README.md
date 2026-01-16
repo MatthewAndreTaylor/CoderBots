@@ -45,8 +45,7 @@ To use the [mujoco](https://github.com/google-deepmind/mujoco) simulation enviro
 ```bash
 pip install tinysim[mujoco]
 ```
-| [UnitreeA1WalkEnv](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_mujoco/unitree_a1) |
-|:-------------------------:|
-| <img width="312" alt="mujoco_sim" src="https://github.com/user-attachments/assets/1109488e-0563-4694-8926-682edd0c8278" /> |
-
+| [UnitreeA1WalkEnv](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_mujoco/unitree_a1) | [ManipulationEnvV0](https://github.com/MatthewAndreTaylor/TinySim/tree/main/tinysim_mujoco/manipulation) |
+|:-------------------------:|:-------------------------:|
+| <img width="312" alt="mujoco_sim" src="https://github.com/user-attachments/assets/1109488e-0563-4694-8926-682edd0c8278" /> | <img width="312" alt="mujoco_sim" src="https://github.com/user-attachments/assets/07b406b5-15fc-4cfd-83c4-cf6b855d773a" /> |
 
