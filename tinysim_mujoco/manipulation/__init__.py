@@ -13,7 +13,7 @@ except ImportError:
 
 
 class ManipulationBaseEnv:
-    def __init__(self, headless=False, **kwargs):
+    def __init__(self, headless=False, use_d405_camera=False, **kwargs):
         model_path = str(pathlib.Path(__file__).parent / "xmls/scene.xml")
         self.model = mujoco.MjModel.from_xml_path(model_path)
         self.data = mujoco.MjData(self.model)
@@ -27,8 +27,7 @@ class ManipulationBaseEnv:
         else:
             self.viewer = None
 
-        self.show_cam_renders = False
-        use_d405_camera = True
+        self.show_cam_renders = True
         self.d405_viewer = None
 
         if use_d405_camera:
@@ -47,7 +46,8 @@ class ManipulationBaseEnv:
 
         if self.d405_viewer:
             self.d405_viewer.render()
-            frame = self.d405_viewer.capture_frame()
+            # user can capture frames in their loop if desired
+            self._last_frame = self.d405_viewer.capture_frame()
             # print("D405 Camera Frame Shape:", frame.shape)
 
     def render(self):
