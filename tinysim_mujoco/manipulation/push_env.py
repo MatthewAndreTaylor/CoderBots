@@ -20,7 +20,7 @@ class ManipulationEnvV0:
         self.env = ManipulationBaseEnv(**kwargs)
         self._model = self.env.model
         self._data = self.env.data
-        self.frame_skip = 50
+        self.frame_skip = 25
         self.dt = self._model.opt.timestep * self.frame_skip
 
         self._body_name2id = {}
@@ -41,12 +41,11 @@ class ManipulationEnvV0:
         print("Joint names:", self.joint_names)
 
         distance_threshold = 0.05
-        self.neutral_joint_values = np.array(
-            [0.00, 0.41, 0.00, -1.85, 0.00, 2.26, 0.79]
-        )
-
-        self.maximum_episode_steps = 128
+        self.neutral_joint_values = np.array([0.00, 0.41, 0.00, -1.85, 0.00, 2.26, 0.79])
+        
         self.current_step = 0
+        self.maximum_episode_steps = 128
+        
         self.distance_threshold = distance_threshold
 
         self.goal = self.get_site_xpos(self._model, self._data, "goal_site").copy()
@@ -55,7 +54,7 @@ class ManipulationEnvV0:
         ).copy()
         obs = self._get_obs()
 
-        self.action_space = spaces.Box(-1.0, 1.0, shape=(7,), dtype="float32")
+        self.action_space = spaces.Box(-1.0, 1.0, shape=(3,), dtype="float32")
         self.observation_space = spaces.Dict(
             dict(
                 desired_goal=spaces.Box(
@@ -74,13 +73,100 @@ class ManipulationEnvV0:
         self.arm_joint_names = self.joint_names[:free_joint_index][0:7]
         # self.gripper_joint_names = self.joint_names[:free_joint_index][7:9]
         self.set_joint_neutral()
+        
+        self.reset_mocap_welds(self._model, self._data)
 
         mujoco.mj_forward(self._model, self._data)
         self.env.step(n_frames=self.frame_skip)
+        
+    def reset_mocap_welds(self, model, data):
+        """Resets the mocap welds that we use for actuation."""
+        if model.nmocap > 0 and model.eq_data is not None:
+            for i in range(model.eq_data.shape[0]):
+                if model.eq_type[i] == mujoco.mjtEq.mjEQ_WELD:
+                    model.eq_data[i, :7] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0])
+        mujoco.mj_forward(model, data)
+            
+    def reset_mocap2body_xpos(self, model, data):
+        """Resets the position and orientation of the mocap bodies to the same
+        values as the bodies they're welded to.
+        """
+
+        if model.eq_type is None or model.eq_obj1id is None or model.eq_obj2id is None:
+            return
+        for eq_type, obj1_id, obj2_id in zip(
+            model.eq_type, model.eq_obj1id, model.eq_obj2id
+        ):
+            if eq_type != mujoco.mjtEq.mjEQ_WELD:
+                continue
+
+            mocap_id = model.body_mocapid[obj1_id]
+            if mocap_id != -1:
+                # obj1 is the mocap, obj2 is the welded body
+                body_idx = obj2_id
+            else:
+                # obj2 is the mocap, obj1 is the welded body
+                mocap_id = model.body_mocapid[obj2_id]
+                body_idx = obj1_id
+
+            assert mocap_id != -1
+            data.mocap_pos[mocap_id][:] = data.xpos[body_idx]
+            data.mocap_quat[mocap_id][:] = data.xquat[body_idx]
+        
+    def mocap_set_action(self, model, data, action):
+        """Update the position of the mocap body with the desired action.
+
+        The action controls the robot using mocaps. Specifically, bodies
+        on the robot (for example the gripper wrist) is controlled with
+        mocap bodies. In this case the action is the desired difference
+        in position and orientation (quaternion), in world coordinates,
+        of the target body. The mocap is positioned relative to
+        the target body according to the delta, and the MuJoCo equality
+        constraint optimizer tries to center the welded body on the mocap.
+        """
+        if model.nmocap > 0:
+            action, _ = np.split(action, (model.nmocap * 7,))
+            action = action.reshape(model.nmocap, 7)
+
+            pos_delta = action[:, :3]
+            quat_delta = action[:, 3:]
+
+            self.reset_mocap2body_xpos(model, data)
+            data.mocap_pos[:] = data.mocap_pos + pos_delta
+            data.mocap_quat[:] = data.mocap_quat + quat_delta
+        
+        
+    def ctrl_set_action(self, model, data, action):
+        """For torque actuators it copies the action into mujoco ctrl field.
+
+        For position actuators it sets the target relative to the current qpos.
+        """
+        if model.nmocap > 0:
+            _, action = np.split(action, (model.nmocap * 7,))
+
+        if len(data.ctrl) > 0:
+            for i in range(action.shape[0]):
+                if model.actuator_biastype[i] == 0:
+                    data.ctrl[i] = action[i]
+                else:
+                    idx = model.jnt_qposadr[model.actuator_trnid[i, 0]]
+                    data.ctrl[i] = data.qpos[idx] + action[i]
 
     def step(self, action):
         self.current_step += 1
-        self._data.ctrl[:] = action
+        # just move the end effector in x, y, z
+        pos_ctrl = action.copy() * 0.05  # scale action
+        rot_ctrl = [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+        action = np.concatenate([pos_ctrl, rot_ctrl])
+        
+        self.ctrl_set_action(self._model, self._data, action)
+        self.mocap_set_action(self._model, self._data, action)
+        
         self.env.step(n_frames=self.frame_skip)
         obs = self._get_obs()
         terminated = self._is_success(obs["achieved_goal"], self.goal)
@@ -110,12 +196,10 @@ class ManipulationEnvV0:
 
     def get_site_xpos(self, model, data, name):
         site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, name)
-        assert site_id != -1, f"Site with name '{name}' is not part of the model!"
         return data.site_xpos[site_id]
 
     def get_site_xvelp(self, model, data, name):
         site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, name)
-        assert site_id != -1, f"Site with name '{name}' is not part of the model!"
         jacp = self.get_site_jacp(model, data, site_id)
         xvelp = jacp @ data.qvel
         return xvelp
@@ -173,15 +257,26 @@ class ManipulationEnvV0:
     def compute_reward(self, achieved_goal, desired_goal, info=None):
         d = self.goal_distance(achieved_goal, desired_goal)
         # give reward for the end effector being close to the object
-        # ee_position = self.get_site_xpos(self._model, self._data, "tip")
-        # object_position = self.get_site_xpos(self._model, self._data, "obj_site")
-        # ee_object_distance = np.linalg.norm(ee_position - object_position, axis=-1)
+        ee_position = self.get_site_xpos(self._model, self._data, "tip")
+        object_position = self.get_site_xpos(self._model, self._data, "obj_site")
+        ee_object_distance = np.linalg.norm(ee_position - object_position, axis=-1)
 
-        # # the arm tries to cheat by moving the object with the side of the gripper
-        # # negative ward if the arm contacts the ground with
-        # effector_distance_reward = -0.1 * (ee_object_distance > 0.05).astype(np.float32)
-        # reward = -d + effector_distance_reward
-        return -(d > self.distance_threshold).astype(np.float32)
+        # the arm tries to cheat by moving the object with the side of the gripper
+        # negative ward if the arm contacts the ground with
+        effector_distance_reward = -0.1 * (ee_object_distance > 0.05).astype(np.float32)
+        
+        # todo: check correctness
+        # give some reward if the cube is moving towards the goal
+        object_velocity = self.get_site_xvelp(self._model, self._data, "obj_site")
+        goal_direction = desired_goal[0] - object_position
+        goal_direction /= np.linalg.norm(goal_direction) + 1e-8
+        velocity_towards_goal = np.dot(object_velocity, goal_direction)
+        velocity_reward = max(0.0, velocity_towards_goal)
+
+        reward = -d + effector_distance_reward + velocity_reward
+        return reward
+        
+        # return -(d > self.distance_threshold).astype(np.float32)
 
     def _is_success(self, achieved_goal, desired_goal):
         d = self.goal_distance(achieved_goal, desired_goal)

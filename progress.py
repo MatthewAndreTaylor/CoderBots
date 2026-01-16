@@ -27,10 +27,10 @@ env = ManipulationGymWrapper(headless=False, use_d405_camera=False)
 model = TQC(
     policy="MultiInputPolicy",
     env=env,
-    learning_rate=0.005,
-    buffer_size=1000000,
+    learning_rate=0.001,
+    buffer_size=100000,
     batch_size=512,
-    learning_starts=2000,
+    learning_starts=1024,
     policy_kwargs=dict(net_arch=[256, 256, 256]),
     replay_buffer_class=HerReplayBuffer,
     replay_buffer_kwargs=dict(n_sampled_goal=4, goal_selection_strategy="future"),
@@ -39,9 +39,8 @@ model = TQC(
 )
 
 
-# model.learn(total_timesteps=50000, progress_bar=True)
-
-# model.save("tqc_manipulation")
+model.learn(total_timesteps=50000, progress_bar=True)
+model.save("tqc_manipulation")
 
 model = TQC.load("tqc_manipulation", env=env)
 

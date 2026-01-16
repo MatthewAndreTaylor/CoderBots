@@ -126,6 +126,15 @@
   <worldbody>
     <light name="top" pos="0 0 2" mode="trackcom"/>
     <camera name="front_cam" pos="1.1 0 0.5" xyaxes="0 1 0 -0.4 0 0.7"/>
+
+    <!-- Added -->
+    <body mocap="true" name="panda_mocap" pos="0.6 0 0.4">
+        <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.7" size="0.005 0.005 0.005" type="box"></geom>
+        <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.5 0.005 0.005" type="box"></geom>
+        <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.005 0.5 0.001" type="box"></geom>
+        <geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.005 0.005 0.5" type="box"></geom>
+    </body>
+
     <body name="link0" childclass="panda">
       <inertial mass="0.629769" pos="0 0 0"
         fullinertia="0.00315 0.00388 0.004285 8.2904e-7 0.00015 8.2299e-6"/>
@@ -276,6 +285,9 @@
   <!-- <equality>
     <joint joint1="finger_joint1" joint2="finger_joint2" solimp="0.95 0.99 0.001" solref="0.005 1"/>
   </equality> -->
+  <equality>
+    <weld body1="panda_mocap" body2="hand" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+  </equality>
 
   <!-- Actuators for the panda robot -->
 
