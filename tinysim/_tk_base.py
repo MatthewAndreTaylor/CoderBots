@@ -1,11 +1,14 @@
-import tkinter as tk
 import threading
+import tkinter as tk
 from abc import ABC, abstractmethod
+
+from . import SimEnvironment
 
 
 class TkBaseFrontend(ABC):
 
-    def __init__(self):
+    def __init__(self, sim_env: SimEnvironment):
+        self.sim_env = sim_env
         self._root = None
         self._canvas = None
         self._thread = None
@@ -15,6 +18,21 @@ class TkBaseFrontend(ABC):
             return
         self._thread = threading.Thread(target=self._window_hook, daemon=True)
         self._thread.start()
+
+    def step(self, *args, **kwargs):
+        state = self.sim_env.step(*args, **kwargs)
+        if self._root:
+            self._root.after(0, lambda: self._draw_state(state))
+        return state
+
+    def reset(self, *args, **kwargs):
+        state = self.sim_env.reset()
+        if self._canvas:
+            self._draw_state(state)
+        return state
+
+    def _draw_state(self, state):
+        raise NotImplementedError
 
     def _window_hook(self):
         root = tk.Tk()

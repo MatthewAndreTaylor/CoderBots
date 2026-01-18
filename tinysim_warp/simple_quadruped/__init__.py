@@ -1,9 +1,9 @@
 import pathlib
 
-from tinysim_warp import WarpBaseEnv
-
 import numpy as np
 import warp as wp
+
+from tinysim_warp import WarpBaseEnv
 
 
 class SimpleRobotDogBaseEnv(WarpBaseEnv):

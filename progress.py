@@ -1,3 +1,9 @@
+from gymnasium import Env
+from sb3_contrib import TQC
+
+# from stable_baselines3 import SAC
+from stable_baselines3.her import HerReplayBuffer
+
 from tinysim_mujoco.manipulation.push_env import ManipulationEnvV0
 
 # env = ManipulationEnvV0(headless=False)
@@ -7,13 +13,6 @@ from tinysim_mujoco.manipulation.push_env import ManipulationEnvV0
 #     _, _, terminated, truncated, _ = env.step(action)
 
 # env.env.viewer.close()
-
-
-from sb3_contrib import TQC
-
-# from stable_baselines3 import SAC
-from stable_baselines3.her import HerReplayBuffer
-from gymnasium import Env
 
 
 # stable-baselines3 requires wrapping environemnts with gym.Env for training

@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
 
+from .tinyspace import Space
+
 
 class SimEnvironment(ABC):
+
+    action_space: Space
+
     @abstractmethod
-    def step(self, action) -> dict:
+    def step(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def reset(self) -> dict:
+    def reset(self, *args, **kwargs):
         pass

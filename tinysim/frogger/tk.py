@@ -1,41 +1,24 @@
-import asyncio
-from . import FroggerEnv, WIDTH, HEIGHT, CELL, ROWS, COLS
+from . import CELL, COLS, HEIGHT, ROWS, WIDTH, FroggerEnv
 
 try:
     import tkinter as tk
-    from .. import _tk_base
+
+    from .._tk_base import TkBaseFrontend
 except ImportError:
     raise ImportError("tkinter is required for FroggerTkFrontend")
 
 
-class FroggerTkFrontend(_tk_base.TkBaseFrontend):
+class FroggerTkFrontend(TkBaseFrontend):
 
-    def __init__(self, viewport_size=(800, 600), sim_env=None):
-        super().__init__()
-        if sim_env is None:
-            sim_env = FroggerEnv()
+    def __init__(self, viewport_size=(800, 600), sim_env=FroggerEnv()):
+        super().__init__(sim_env)
+        self._viewport_size = viewport_size
+        self.keys = set()
+
         if sim_env.num_envs != 1:
             raise ValueError(
                 "FroggerTkFrontend currently only supports single environment."
             )
-        self.sim_env = sim_env
-        self._viewport_size = viewport_size
-
-        self.keys = set()
-
-    async def step(self, action, dt=0.01):
-        state = self.sim_env.step(action, dt=dt)
-        if self._root:
-            self._root.after(0, lambda: self._draw_state(self.sim_env))
-
-        await asyncio.sleep(dt)
-        return state
-
-    async def reset(self):
-        state = self.sim_env.reset()
-        if self._canvas:
-            self._draw_state(self.sim_env)
-        return state
 
     def _create_window(self, root):
         w, h = self._viewport_size
@@ -49,11 +32,12 @@ class FroggerTkFrontend(_tk_base.TkBaseFrontend):
         root.bind("<KeyRelease>", lambda e: self.keys.discard(e.keysym))
 
         self.bring_to_front(root)
-        self._draw_state(self.sim_env)
+        self._draw_state()
         self._pump()
         root.mainloop()
 
-    def _draw_state(self, sim_env: FroggerEnv):
+    def _draw_state(self, state=None):
+        sim_env = self.sim_env
         if not self._canvas:
             return
 

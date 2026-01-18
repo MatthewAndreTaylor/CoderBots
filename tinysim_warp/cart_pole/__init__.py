@@ -1,7 +1,7 @@
 import numpy as np
+import warp as wp
 
 from tinysim_warp import WarpBaseEnv
-import warp as wp
 
 quat_id = wp.quat_identity()
 
@@ -100,4 +100,4 @@ class CartPoleBaseEnv(WarpBaseEnv):
         qw = float(np.clip(pole_quat[3], -1.0, 1.0))
         tilt = 2.0 * np.arccos(qw)  # radians, in [0, pi]
         max_tilt = np.deg2rad(90.0)
-        return obs, 1.0, tilt > max_tilt
+        return obs, tilt > max_tilt

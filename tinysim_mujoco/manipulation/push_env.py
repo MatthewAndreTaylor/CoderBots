@@ -2,6 +2,7 @@ import numpy as np
 
 try:
     import mujoco
+
     from . import ManipulationBaseEnv
 except ImportError:
     raise ImportError(
@@ -41,11 +42,13 @@ class ManipulationEnvV0:
         print("Joint names:", self.joint_names)
 
         distance_threshold = 0.05
-        self.neutral_joint_values = np.array([0.00, 0.41, 0.00, -1.85, 0.00, 2.26, 0.79])
-        
+        self.neutral_joint_values = np.array(
+            [0.00, 0.41, 0.00, -1.85, 0.00, 2.26, 0.79]
+        )
+
         self.current_step = 0
         self.maximum_episode_steps = 128
-        
+
         self.distance_threshold = distance_threshold
 
         self.goal = self.get_site_xpos(self._model, self._data, "goal_site").copy()
@@ -73,19 +76,19 @@ class ManipulationEnvV0:
         self.arm_joint_names = self.joint_names[:free_joint_index][0:7]
         # self.gripper_joint_names = self.joint_names[:free_joint_index][7:9]
         self.set_joint_neutral()
-        
+
         self.reset_mocap_welds(self._model, self._data)
 
         mujoco.mj_forward(self._model, self._data)
         self.env.step(n_frames=self.frame_skip)
-        
+
     def reset_mocap_welds(self, model, data):
         if model.nmocap > 0 and model.eq_data is not None:
             for i in range(model.eq_data.shape[0]):
                 if model.eq_type[i] == mujoco.mjtEq.mjEQ_WELD:
                     model.eq_data[i, :7] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0])
         mujoco.mj_forward(model, data)
-            
+
     def reset_mocap2body_xpos(self, model, data):
         if model.eq_type is None or model.eq_obj1id is None or model.eq_obj2id is None:
             return
@@ -107,7 +110,7 @@ class ManipulationEnvV0:
             assert mocap_id != -1
             data.mocap_pos[mocap_id][:] = data.xpos[body_idx]
             data.mocap_quat[mocap_id][:] = data.xquat[body_idx]
-        
+
     def mocap_set_action(self, model, data, action):
         if model.nmocap > 0:
             action, _ = np.split(action, (model.nmocap * 7,))
@@ -117,8 +120,7 @@ class ManipulationEnvV0:
             self.reset_mocap2body_xpos(model, data)
             data.mocap_pos[:] = data.mocap_pos + pos_delta
             data.mocap_quat[:] = data.mocap_quat + quat_delta
-        
-        
+
     def ctrl_set_action(self, model, data, action):
         if model.nmocap > 0:
             _, action = np.split(action, (model.nmocap * 7,))
@@ -142,10 +144,10 @@ class ManipulationEnvV0:
             0.0,
         ]
         action = np.concatenate([pos_ctrl, rot_ctrl])
-        
+
         self.ctrl_set_action(self._model, self._data, action)
         self.mocap_set_action(self._model, self._data, action)
-        
+
         self.env.step(n_frames=self.frame_skip)
         obs = self._get_obs()
         terminated = self._is_success(obs["achieved_goal"], self.goal)
@@ -243,7 +245,7 @@ class ManipulationEnvV0:
         # the arm tries to cheat by moving the object with the side of the gripper
         # negative ward if the arm contacts the ground with
         effector_distance_reward = -0.1 * (ee_object_distance > 0.05).astype(np.float32)
-        
+
         # todo: check correctness
         # give some reward if the cube is moving towards the goal
         object_velocity = self.get_site_xvelp(self._model, self._data, "obj_site")
@@ -254,7 +256,7 @@ class ManipulationEnvV0:
 
         reward = -d + effector_distance_reward + velocity_reward
         return reward
-        
+
         # return -(d > self.distance_threshold).astype(np.float32)
 
     def _is_success(self, achieved_goal, desired_goal):

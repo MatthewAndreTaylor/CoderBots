@@ -1,6 +1,6 @@
-import numpy as np
-import mujoco
 import glfw
+import mujoco
+import numpy as np
 
 
 class OffScreenRenderer:

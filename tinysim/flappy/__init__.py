@@ -1,5 +1,7 @@
 import numpy as np
+
 from .. import SimEnvironment
+from ..tinyspace import Discrete
 
 WIDTH, HEIGHT = 800, 600
 GRAVITY = 900.0
@@ -16,6 +18,7 @@ BIRD_SIZE = 35
 class FlappyEnv(SimEnvironment):
     def __init__(self, num_envs: int = 1):
         self.num_envs = num_envs
+        self.action_space = Discrete(2)  # 0: no flap, 1: flap
         self.reset()
 
     def reset(self):
@@ -54,16 +57,15 @@ class FlappyEnv(SimEnvironment):
         self.pipes_x = self.pipes_x[keep]
         self.pipes_y = self.pipes_y[keep]
 
-    def _check_collisions(self):  # world bounds
+    def _check_collisions(self):
         hit_bounds = (self.bird_y < 0) | (self.bird_y + BIRD_SIZE > HEIGHT)
-        bx = BIRD_X
         by = self.bird_y[:, None]
         px = self.pipes_x[None, :]
         upper_y = np.zeros_like(self.pipes_y)[None, :]
         upper_h = self.pipes_y[None, :]
         lower_y = (self.pipes_y + PIPE_GAP)[None, :]
         lower_h = (HEIGHT - (self.pipes_y + PIPE_GAP))[None, :]
-        x_overlap = (bx < px + PIPE_WIDTH) & (bx + BIRD_SIZE > px)
+        x_overlap = (BIRD_X < px + PIPE_WIDTH) & (BIRD_X + BIRD_SIZE > px)
         upper_hit = x_overlap & (by < upper_y + upper_h) & (by + BIRD_SIZE > upper_y)
         lower_hit = x_overlap & (by < lower_y + lower_h) & (by + BIRD_SIZE > lower_y)
         hit_pipe = (upper_hit | lower_hit).any(axis=1)

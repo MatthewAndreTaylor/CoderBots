@@ -1,9 +1,11 @@
 import json
 import math
-import numpy as np
 from pathlib import Path
-from .. import SimEnvironment
 
+import numpy as np
+
+from .. import SimEnvironment
+from ..tinyspace import Box
 
 try:
     with open(Path(__file__).parent / "track_0.json", "r") as f:
@@ -104,6 +106,9 @@ def collides(cx, cy):
 class TopDownDrivingEnv(SimEnvironment):
     def __init__(self, num_envs: int = 1):
         self.num_envs = num_envs
+
+        # throttle, steer
+        self.action_space = Box(low=-1.0, high=1.0, shape=(num_envs, 2))
         self.reset()
 
     def reset(self):
@@ -125,22 +130,16 @@ class TopDownDrivingEnv(SimEnvironment):
         }
 
     def step(self, action, dt=0.02):
-        throttle = action.get("throttle", 0.0)
-        steer = action.get("steer", 0.0)
-
-        if np.isscalar(throttle) and np.isscalar(steer):
-            throttle = np.full(self.num_envs, throttle, dtype=np.float32)
-            steer = np.full(self.num_envs, steer, dtype=np.float32)
-        elif isinstance(throttle, np.ndarray) and isinstance(steer, np.ndarray):
-            throttle = np.asarray(throttle, dtype=np.float32)
-            steer = np.asarray(steer, dtype=np.float32)
-            if throttle.shape[0] != self.num_envs or steer.shape[0] != self.num_envs:
-                raise ValueError(
-                    f"Expected actions of shape ({self.num_envs},), got {throttle.shape} and {steer.shape}"
-                )
-        else:
+        if not isinstance(action, np.ndarray):
             raise ValueError(
                 "Inputs throttle and steer must both be either scalars or numpy arrays."
+            )
+
+        throttle = action[:, 0].astype(np.float32)
+        steer = action[:, 1].astype(np.float32)
+        if throttle.shape[0] != self.num_envs or steer.shape[0] != self.num_envs:
+            raise ValueError(
+                f"Expected actions of shape ({self.num_envs},), got {throttle.shape} and {steer.shape}"
             )
 
         self.velocity += throttle * ACCELERATION * dt
@@ -171,8 +170,7 @@ class TopDownDrivingEnv(SimEnvironment):
         reward = self.prev_dist - dist
         reached = dist <= CHECKPOINT_RADIUS
 
-        bonus = 1.0
-        reward += np.where(reached, bonus, 0.0)
+        reward += np.where(reached, 1.0, 0.0)
         self.checkpoint_idx = np.where(
             reached, self.checkpoint_idx + 1, self.checkpoint_idx
         )

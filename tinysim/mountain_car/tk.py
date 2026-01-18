@@ -1,38 +1,22 @@
-import asyncio
 import math
+
 import numpy as np
+
 from . import MountainCarEnv
 
 try:
     import tkinter as tk
-    from .. import _tk_base
+
+    from .._tk_base import TkBaseFrontend
 except ImportError:
     raise ImportError("tkinter is required for MountainCarTkFrontend")
 
 
-class MountainCarTkFrontend(_tk_base.TkBaseFrontend):
+class MountainCarTkFrontend(TkBaseFrontend):
 
-    def __init__(self, viewport_size=(600, 400), sim_env=None):
-        super().__init__()
-        if sim_env is None:
-            sim_env = MountainCarEnv()
-        self.sim_env = sim_env
+    def __init__(self, viewport_size=(600, 400), sim_env=MountainCarEnv()):
+        super().__init__(sim_env)
         self._viewport_size = viewport_size
-
-    async def step(self, action, dt=0.01):
-        state = self.sim_env.step(action)
-
-        if self._root:
-            self._root.after(0, lambda s=state: self._draw_state(s))
-
-        await asyncio.sleep(dt)
-        return state
-
-    async def reset(self):
-        state = self.sim_env.reset()
-        if self._canvas:
-            self._draw_state(state)
-        return state
 
     def _create_window(self, root):
         w, h = self._viewport_size
@@ -46,7 +30,7 @@ class MountainCarTkFrontend(_tk_base.TkBaseFrontend):
         self._pump()
         root.mainloop()
 
-    def _draw_state(self, state: dict):
+    def _draw_state(self, state=None):
         if not self._canvas:
             return
 
@@ -54,12 +38,10 @@ class MountainCarTkFrontend(_tk_base.TkBaseFrontend):
         w = int(c.winfo_width() or self._viewport_size[0])
         h = int(c.winfo_height() or self._viewport_size[1])
         c.delete("all")
-
         min_x = self.sim_env.min_position
         max_x = self.sim_env.max_position
         world_width = max_x - min_x
         scale = w / world_width
-        clearance = 10
 
         def heightFn(x):
             return np.sin(3 * x) * 0.45 + 0.55
@@ -105,7 +87,7 @@ class MountainCarTkFrontend(_tk_base.TkBaseFrontend):
         for i, x_world in enumerate(positions):
             y_world = heightFn(x_world)
             x_screen = (x_world - min_x) * scale
-            y_screen = h - y_world * scale - clearance
+            y_screen = h - y_world * scale
 
             slope = math.cos(3 * x_world)
             angle = -math.atan(slope)

@@ -1,10 +1,10 @@
 import pathlib
+
 import numpy as np
-
-from tinysim_warp import WarpBaseEnv
-
 import warp as wp
 import warp.examples
+
+from tinysim_warp import WarpBaseEnv
 
 
 class RobotDogBaseEnv(WarpBaseEnv):

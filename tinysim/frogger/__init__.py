@@ -1,5 +1,7 @@
 import numpy as np
+
 from .. import SimEnvironment
+from ..tinyspace import Discrete
 
 WIDTH, HEIGHT = 800, 600
 CELL = 40
@@ -14,6 +16,9 @@ class FroggerEnv(SimEnvironment):
         self.car_width = CELL * 2
         self.traffic_rows = np.array([4, 5, 6, 8, 9])
         self.speeds = np.array([120, -150, 200, -180, 140], dtype=np.float32)
+        self.done = np.zeros(self.num_envs, dtype=bool)
+
+        self.action_space = Discrete(5)  # 0: stay, 1: left, 2: right, 3: up, 4: down
         self.reset()
 
     def reset(self):
@@ -62,9 +67,17 @@ class FroggerEnv(SimEnvironment):
         dx = np.array([action_map[a][0] for a in action])
         dy = np.array([action_map[a][1] for a in action])
 
-        # Move frogs
-        self.frog_pos[:, 0] = np.clip(self.frog_pos[:, 0] + dx, 0, COLS - 1)
-        self.frog_pos[:, 1] = np.clip(self.frog_pos[:, 1] + dy, 0, ROWS - 1)
+        # Move frogs only move frog if not done
+        self.frog_pos[:, 0] = np.where(
+            ~self.done,
+            np.clip(self.frog_pos[:, 0] + dx, 0, COLS - 1),
+            self.frog_pos[:, 0],
+        )
+        self.frog_pos[:, 1] = np.where(
+            ~self.done,
+            np.clip(self.frog_pos[:, 1] + dy, 0, ROWS - 1),
+            self.frog_pos[:, 1],
+        )
 
         # Update car positions
         self.car_x += self.speeds[:, None] * dt
@@ -127,6 +140,10 @@ class FroggerEnv(SimEnvironment):
         current_height = self.total_height - self.frog_pos[:, 1]
         self.score = self.crossings + current_height / self.total_height
 
+        # Added to persist done state
+        self.done = done | self.done
+        done = self.done
+
         frog_pos = self.frog_pos.tolist()
         grid = self._build_car_grid().tolist()
         scores = self.score.tolist()
@@ -140,6 +157,6 @@ class FroggerEnv(SimEnvironment):
         return {
             "frog_pos": frog_pos,
             "grid": grid,
-            "done": done,
             "score": scores,
+            "done": done,
         }

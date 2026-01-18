@@ -1,5 +1,7 @@
 import numpy as np
+
 from .. import SimEnvironment
+from ..tinyspace import Discrete
 
 
 class MountainCarEnv(SimEnvironment):
@@ -12,12 +14,12 @@ class MountainCarEnv(SimEnvironment):
         self.force = 0.001
         self.gravity = 0.0025
         self.goal_position = 0.5
+        self.reset()
 
-        # initial state
-        self.position = np.full(num_envs, -0.5, dtype=np.float32)
-        self.velocity = np.zeros(num_envs, dtype=np.float32)
+        # actions: 0 (left), 1 (no push), 2 (right)
+        self.action_space = Discrete(3)
 
-    def step(self, action) -> dict:
+    def step(self, action):
         if np.isscalar(action):
             action = np.full(self.num_envs, action, dtype=np.float32)
         else:
@@ -46,11 +48,14 @@ class MountainCarEnv(SimEnvironment):
 
         return {"position": self.position, "velocity": self.velocity, "done": done}
 
-    def reset(self) -> dict:
-        self.position = -0.5
-        self.velocity = 0.0
-        return {
-            "position": self.position,
-            "velocity": self.velocity,
-            "done": self.position >= self.goal_position,
-        }
+    def reset(self, **kwargs) -> dict:
+        self.position = np.full(self.num_envs, -0.5, dtype=np.float32)
+        self.velocity = np.zeros(self.num_envs, dtype=np.float32)
+        done = self.position >= self.goal_position
+
+        if self.num_envs == 1:
+            self.position = float(self.position[0])
+            self.velocity = float(self.velocity[0])
+            done = bool(done[0])
+
+        return {"position": self.position, "velocity": self.velocity, "done": done}

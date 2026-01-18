@@ -1,45 +1,22 @@
-import asyncio
-
 try:
     import tkinter as tk
-    from .. import _tk_base
+
+    from .._tk_base import TkBaseFrontend
 except ImportError:
     raise ImportError("tkinter is required for FlappyTkFrontend")
 
-from . import (
-    FlappyEnv,
-    WIDTH,
-    HEIGHT,
-    PIPE_WIDTH,
-    BIRD_SIZE,
-    BIRD_X,
-    PIPE_GAP,
-)
+from . import BIRD_SIZE, BIRD_X, HEIGHT, PIPE_GAP, PIPE_WIDTH, WIDTH, FlappyEnv
 
 
-class FlappyTkFrontend(_tk_base.TkBaseFrontend):
-
-    def __init__(self, viewport_size=(800, 600), sim_env=None):
-        super().__init__()
-        if sim_env is None:
-            sim_env = FlappyEnv()
-
-        self.sim_env = sim_env
+class FlappyTkFrontend(TkBaseFrontend):
+    def __init__(self, viewport_size=(800, 600), sim_env=FlappyEnv()):
+        super().__init__(sim_env)
         self._viewport_size = viewport_size
 
-    async def step(self, action, dt=0.02):
-        state = self.sim_env.step(action, dt=dt)
-        if self._root:
-            self._root.after(0, lambda: self._draw_state(state))
-
-        await asyncio.sleep(dt)
-        return state
-
-    async def reset(self):
-        state = self.sim_env.reset()
-        if self._root:
-            self._draw_state(state)
-        return state
+        if sim_env.num_envs != 1:
+            raise ValueError(
+                "FlappyTkFrontend currently only supports single environment."
+            )
 
     def _create_window(self, root):
         w, h = self._viewport_size
@@ -66,7 +43,6 @@ class FlappyTkFrontend(_tk_base.TkBaseFrontend):
 
         # bird
         by = state["bird_y"]
-
         if not state.get("done", False):
             canvas.create_oval(
                 BIRD_X,

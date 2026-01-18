@@ -1,7 +1,8 @@
 import argparse
-from tinysim_warp.cart_pole import CartPoleBaseEnv
 
 import warp as wp
+
+from tinysim_warp.cart_pole import CartPoleBaseEnv
 
 # requirements: `pip install tinysim[warp]`
 

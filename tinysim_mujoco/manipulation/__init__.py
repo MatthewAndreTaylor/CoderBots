@@ -1,9 +1,8 @@
 import pathlib
 
-import numpy as np
-
 try:
     import mujoco
+
     from ..gl_viewer import GLViewer, OffScreenRenderer
     from ..notebook_viewer import NotebookViewer
 except ImportError:

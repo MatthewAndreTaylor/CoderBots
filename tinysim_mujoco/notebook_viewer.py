@@ -1,5 +1,5 @@
-import numpy as np
 import mujoco
+import numpy as np
 from IPython.display import display
 from PIL import Image as PILImage
 

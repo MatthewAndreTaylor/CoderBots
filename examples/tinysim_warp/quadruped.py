@@ -1,7 +1,8 @@
 import argparse
-from tinysim_warp.quadruped import RobotDogBaseEnv
 
 import warp as wp
+
+from tinysim_warp.quadruped import RobotDogBaseEnv
 
 # requirements: `pip install tinysim[warp]`
 
