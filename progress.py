@@ -1,4 +1,6 @@
-from gymnasium import Env
+import numpy as np
+
+from gymnasium import Env, spaces
 from sb3_contrib import TQC
 
 # from stable_baselines3 import SAC
@@ -6,19 +8,26 @@ from stable_baselines3.her import HerReplayBuffer
 
 from tinysim_mujoco.manipulation.push_env import ManipulationEnvV0
 
-# env = ManipulationEnvV0(headless=False)
-
-# for _ in range(100):
-#     action = env.action_space.sample()
-#     _, _, terminated, truncated, _ = env.step(action)
-
-# env.env.viewer.close()
-
 
 # stable-baselines3 requires wrapping environemnts with gym.Env for training
 class ManipulationGymWrapper(ManipulationEnvV0, Env):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        obs = self._get_obs()
+        self.action_space = spaces.Box(-1.0, 1.0, shape=(3,), dtype="float32")
+        self.observation_space = spaces.Dict(
+            dict(
+                desired_goal=spaces.Box(
+                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float64"
+                ),
+                achieved_goal=spaces.Box(
+                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float64"
+                ),
+                observation=spaces.Box(
+                    -np.inf, np.inf, shape=obs["observation"].shape, dtype="float64"
+                ),
+            )
+        )
 
 
 env = ManipulationGymWrapper(headless=False, use_d405_camera=False)

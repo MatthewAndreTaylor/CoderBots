@@ -12,8 +12,6 @@ except ImportError:
 _FLOAT_EPS = np.finfo(np.float64).eps
 _EPS4 = _FLOAT_EPS * 4.0
 
-from gymnasium import spaces
-
 
 class ManipulationEnvV0:
 
@@ -30,16 +28,11 @@ class ManipulationEnvV0:
             if name is not None:
                 self._body_name2id[name] = body_id
 
-        print("Body name to ID mapping:", self._body_name2id)
-
         self.joint_names = []
         for j in range(self._model.njnt):
             name = mujoco.mj_id2name(self._model, mujoco.mjtObj.mjOBJ_JOINT, j)
             if name is not None:
                 self.joint_names.append(name)
-
-        # print each type of joint in the model
-        print("Joint names:", self.joint_names)
 
         distance_threshold = 0.05
         self.neutral_joint_values = np.array(
@@ -48,39 +41,18 @@ class ManipulationEnvV0:
 
         self.current_step = 0
         self.maximum_episode_steps = 128
-
         self.distance_threshold = distance_threshold
 
         self.goal = self.get_site_xpos(self._model, self._data, "goal_site").copy()
         self.initial_object_pos = self.get_site_xpos(
             self._model, self._data, "obj_site"
         ).copy()
-        obs = self._get_obs()
-
-        self.action_space = spaces.Box(-1.0, 1.0, shape=(3,), dtype="float32")
-        self.observation_space = spaces.Dict(
-            dict(
-                desired_goal=spaces.Box(
-                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float64"
-                ),
-                achieved_goal=spaces.Box(
-                    -np.inf, np.inf, shape=obs["achieved_goal"].shape, dtype="float64"
-                ),
-                observation=spaces.Box(
-                    -np.inf, np.inf, shape=obs["observation"].shape, dtype="float64"
-                ),
-            )
-        )
-
         free_joint_index = self.joint_names.index("obj_joint")
         self.arm_joint_names = self.joint_names[:free_joint_index][0:7]
         # self.gripper_joint_names = self.joint_names[:free_joint_index][7:9]
         self.set_joint_neutral()
-
         self.reset_mocap_welds(self._model, self._data)
-
         mujoco.mj_forward(self._model, self._data)
-        self.env.step(n_frames=self.frame_skip)
 
     def reset_mocap_welds(self, model, data):
         if model.nmocap > 0 and model.eq_data is not None:
@@ -256,7 +228,8 @@ class ManipulationEnvV0:
 
         reward = -d + effector_distance_reward + velocity_reward
         return reward
-
+    
+        # sparse
         # return -(d > self.distance_threshold).astype(np.float32)
 
     def _is_success(self, achieved_goal, desired_goal):
