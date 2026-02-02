@@ -13,9 +13,10 @@ _FLOAT_EPS = np.finfo(np.float64).eps
 _EPS4 = _FLOAT_EPS * 4.0
 
 
-class ManipulationEnvV0:
+class ManipulationEnvV1:
 
     def __init__(self, **kwargs):
+        kwargs["use_d405_camera"] = True
         self.env = ManipulationBaseEnv(**kwargs)
         self._model = self.env.model
         self._data = self.env.data
@@ -172,7 +173,10 @@ class ManipulationEnvV0:
             self.get_site_xmat(self._model, self._data, "obj_site")
         )
 
+        img = self.env._last_frame.transpose(2, 0, 1)
+
         return {
+            "observation_cap": img,
             "observation": np.concatenate(
                 [
                     ee_position,

@@ -164,14 +164,14 @@ class UnitreeA1WalkEnv:
         action_diff_penalty = np.sum(np.abs(action - self.prev_action))
         action_sym = self.action_sym()
 
-        Positive_rewards = (
+        rewards = (
             tracking_lin_vel_reward * self.reward_weights["linear_vel_tracking"]
             + tracking_ang_vel_reward * self.reward_weights["angular_vel_tracking"]
             + self.is_healthy * self.reward_weights["healthy"]
             + self.feet_air_time_reward * self.reward_weights["feet_airtime"]
         )
 
-        Negative_rewards = (
+        neg_rewards = (
             self.torque_cost * self.cost_weights["torque"]
             + action_diff_penalty * self.cost_weights["action_rate"]
             + lin_vel_z_penalty * self.cost_weights["vertical_vel"]
@@ -179,11 +179,9 @@ class UnitreeA1WalkEnv:
             + action_sym * self.cost_weights["action_sym"]
             + self.acceleration_cost * self.cost_weights["joint_acceleration"]
             + self.orientation_cost * self.cost_weights["orientation"]
-            + self.default_joint_position_cost
-            * self.cost_weights["default_joint_position"]
+            + self.default_joint_pos_cost * self.cost_weights["default_joint_pos"]
         )
-        reward = Positive_rewards - Negative_rewards
-        return reward
+        return rewards - neg_rewards
 
     def _tracking_velocity_penalty(self, lin_vel, ang_vel):
         lin_vel_error = np.sum(np.abs(self.target_lin_vel[0] - lin_vel[0]))
@@ -234,7 +232,7 @@ class UnitreeA1WalkEnv:
         return np.square(roll) + np.square(pitch)
 
     @property
-    def default_joint_position_cost(self):
+    def default_joint_pos_cost(self):
         joint_pos = self.env.get_joint_data()
         soft_joint_limits_low = self.joint_limits_low * 0.9
         soft_joint_limits_high = self.joint_limits_high * 0.9
