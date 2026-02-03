@@ -3,9 +3,6 @@ import numpy as np
 from gymnasium import Env, spaces
 from sb3_contrib import TQC
 
-# from stable_baselines3 import SAC
-from stable_baselines3.her import HerReplayBuffer
-
 import torch as th
 import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
@@ -23,8 +20,8 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
 
         # CNN for image
         obs_cap_space = observation_space.spaces["observation_cap"]
-        extractors["observation_cap"] = NatureCNN(obs_cap_space, features_dim=256)
-        total_size += 256
+        extractors["observation_cap"] = NatureCNN(obs_cap_space, features_dim=16)
+        total_size += 16
 
         # MLP for low-dim observations
         for key in ["observation", "achieved_goal", "desired_goal"]:
@@ -33,7 +30,6 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
             total_size += int(np.prod(space.shape))
 
         self.extractors = nn.ModuleDict(extractors)
-
         self._features_dim = total_size
 
     def forward(self, observations):
@@ -69,26 +65,26 @@ class ManipulationGymWrapper(ManipulationEnvV1, Env):
         )
 
 
-env = ManipulationGymWrapper(headless=False, use_d405_camera=False)
+env = ManipulationGymWrapper(headless=False, show_cam_renders=False)
 
 model = TQC(
+    # Not sure if can be done with CNNPolicy (obs of joints seems very important)
     policy="MultiInputPolicy",
     env=env,
     learning_rate=0.001,
-    buffer_size=10000,
-    batch_size=512,
-    learning_starts=1024,
+    buffer_size=100000,
+    batch_size=64,
+    learning_starts=512,
     policy_kwargs=dict(
         features_extractor_class=CustomCombinedExtractor,
         net_arch=dict(
-            pi=[256, 256, 256],
-            qf=[256, 256, 256],
+            pi=[128, 128],
+            qf=[128, 128],
         ),
     ),
-    replay_buffer_class=HerReplayBuffer,
-    replay_buffer_kwargs=dict(n_sampled_goal=4, goal_selection_strategy="future"),
     tau=0.05,
     gamma=0.95,
+    device="cuda",
 )
 
 

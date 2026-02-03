@@ -38,7 +38,7 @@ model = TQC(
     learning_rate=0.001,
     buffer_size=100000,
     batch_size=512,
-    learning_starts=1024,
+    learning_starts=512,  # 1024 (working)
     policy_kwargs=dict(net_arch=[256, 256, 256]),
     replay_buffer_class=HerReplayBuffer,
     replay_buffer_kwargs=dict(n_sampled_goal=4, goal_selection_strategy="future"),

@@ -21,11 +21,11 @@ class CartPoleBaseEnv(WarpBaseEnv):
         model = builder.finalize()
         model.joint_attach_ke = 1000.0
         model.joint_attach_kd = 1.0
-        self.joint_act_np = np.zeros(self.model.joint_dof_count, dtype=np.float32)
+        self.joint_act_np = np.zeros(model.joint_dof_count, dtype=np.float32)
         self.joint_act_wp = wp.array(
             self.joint_act_np, dtype=float, device=wp.get_device()
         )
-        self.model.joint_act = self.joint_act_wp
+        model.joint_act = self.joint_act_wp
         return model
 
     def create_cartpole(self):
@@ -100,4 +100,4 @@ class CartPoleBaseEnv(WarpBaseEnv):
         qw = float(np.clip(pole_quat[3], -1.0, 1.0))
         tilt = 2.0 * np.arccos(qw)  # radians, in [0, pi]
         max_tilt = np.deg2rad(90.0)
-        return obs, tilt > max_tilt
+        return obs, 1.0, tilt > max_tilt

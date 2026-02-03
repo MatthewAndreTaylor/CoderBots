@@ -70,11 +70,9 @@ class WarpBaseEnv(ABC):
             and wp.is_mempool_enabled(wp.get_device())
         )
         if self.try_use_cuda_graph and not self.use_cuda_graph:
-            raise Warning(
-                """Unable to enable CUDA graph capture.
+            raise Warning("""Unable to enable CUDA graph capture.
                 Please verify that Warp is using CUDA and that the memory pool is enabled.
-                """
-            )
+                """)
 
         if self.use_cuda_graph:
             with wp.ScopedCapture() as capture:

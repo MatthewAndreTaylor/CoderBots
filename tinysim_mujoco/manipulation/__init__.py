@@ -39,8 +39,6 @@ class ManipulationBaseEnv:
             else:
                 self.d405_viewer = OffScreenRenderer(self.model, self.data, self.cam_id)
 
-            self._last_frame = self.d405_viewer.capture_frame()
-
     def step(self, action=None, n_frames=20):
         self.render()
         mujoco.mj_step(self.model, self.data, nstep=n_frames)
@@ -48,9 +46,6 @@ class ManipulationBaseEnv:
 
         if self.d405_viewer:
             self.d405_viewer.render()
-            # user can capture frames in their loop if desired
-            self._last_frame = self.d405_viewer.capture_frame()
-            # print("D405 Camera Frame Shape:", self._last_frame.shape)
 
     def render(self):
         if self.viewer:

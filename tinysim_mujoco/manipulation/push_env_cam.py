@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image as PILImage
 
 try:
     import mujoco
@@ -173,7 +174,8 @@ class ManipulationEnvV1:
             self.get_site_xmat(self._model, self._data, "obj_site")
         )
 
-        img = self.env._last_frame.transpose(2, 0, 1)
+        frame = self.env.d405_viewer.capture_frame()
+        img = np.array(PILImage.fromarray(frame).resize((64, 64))).transpose(2, 0, 1)
 
         return {
             "observation_cap": img,
