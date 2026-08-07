@@ -6,7 +6,7 @@ from sb3_contrib import TQC
 # from stable_baselines3 import SAC
 from stable_baselines3.her import HerReplayBuffer
 
-from tinysim_mujoco.manipulation.push_env import ManipulationEnvV0
+from picogym_mujoco.manipulation.push_env import ManipulationEnvV0
 
 
 # stable-baselines3 requires wrapping environemnts with gym.Env for training

@@ -33,7 +33,7 @@ jobs:
 
       - name: Build the JupyterLite site
         run: |
-          jupyter lite build --contents examples/tinysim --output-dir site_dist/jupyterlite
+          jupyter lite build --contents examples/picogym --output-dir site_dist/jupyterlite
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

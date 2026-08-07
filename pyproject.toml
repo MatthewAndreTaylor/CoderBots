@@ -1,5 +1,5 @@
 [project]
-name = "tinysim"
+name = "picogym"
 version = "0.0.5"
 description = "small modular simulation environments"
 authors = [
@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-urls = {Homepage = "https://github.com/MatthewAndreTaylor/TinySim"}
+urls = {Homepage = "https://github.com/MatthewAndreTaylor/picogym"}
 keywords = ["jupyter", "simulation"]
 
 dependencies = [
@@ -41,16 +41,16 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["tinysim", "tinysim_warp", "tinysim_mujoco"]
+packages = ["picogym", "picogym_warp", "picogym_mujoco"]
 include-package-data = true
 
-# TODO: move assets to separate package - example: tinysim-{ext}-assets
+# TODO: move assets to separate package - example: picogym-{ext}-assets
 [tool.setuptools.package-data]
-tinysim = ["**/*"]
-tinysim_warp = ["**/*"]
-tinysim_mujoco = ["**/*"]
+picogym = ["**/*"]
+picogym_warp = ["**/*"]
+picogym_mujoco = ["**/*"]
 
 [tool.setuptools.exclude-package-data]
-tinysim = ["**/*.png"]
-tinysim_warp = ["**/*.png"]
-tinysim_mujoco = ["**/*.png"]
+picogym = ["**/*.png"]
+picogym_warp = ["**/*.png"]
+picogym_mujoco = ["**/*.png"]

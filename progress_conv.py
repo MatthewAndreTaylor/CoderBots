@@ -8,7 +8,7 @@ import torch.nn as nn
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.torch_layers import NatureCNN
 
-from tinysim_mujoco.manipulation.push_env_cam import ManipulationEnvV1
+from picogym_mujoco.manipulation.push_env_cam import ManipulationEnvV1
 
 
 class CustomCombinedExtractor(BaseFeaturesExtractor):
